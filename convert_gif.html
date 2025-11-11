@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GIF to Frame TXT Extractor (Browser Native)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-6">
+  <div class="bg-white rounded-2xl shadow-lg w-full max-w-2xl p-8">
+    <h1 class="text-2xl font-semibold text-gray-800 mb-1 text-center">GIF → frame.txt Extractor</h1>
+    <p class="text-gray-500 text-center mb-6">Upload GIF untuk diubah menjadi data hex (frame.txt)</p>
+
+    <!-- Upload -->
+    <div id="dropZone"
+         class="border-2 border-dashed border-blue-400 rounded-xl p-6 text-center cursor-pointer transition hover:bg-blue-50">
+      <p id="dropText" class="text-gray-600">Tarik & letakkan file GIF di sini<br><span class="text-sm text-gray-400">atau klik untuk memilih</span></p>
+      <input type="file" id="fileInput" accept=".gif" class="hidden" />
+    </div>
+
+    <div class="mt-6 w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+      <div id="progressBar" class="bg-blue-500 h-3 w-0 transition-all duration-300"></div>
+    </div>
+
+    <button id="extractBtn" class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg">
+      Extract Frames
+    </button>
+
+    <canvas id="preview" width="128" height="64" class="mt-6 mx-auto border border-gray-300 rounded-lg"></canvas>
+    <div id="log" class="bg-gray-50 rounded-lg mt-6 p-4 h-48 overflow-y-auto font-mono text-sm text-gray-700 whitespace-pre-line border border-gray-200"></div>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+    const progressBar = document.getElementById("progressBar");
+    const logBox = document.getElementById("log");
+    const canvas = document.getElementById("preview");
+    const ctx = canvas.getContext("2d");
+
+    const log = (msg) => {
+      logBox.textContent += msg + "\n";
+      logBox.scrollTop = logBox.scrollHeight;
+    };
+
+    dropZone.addEventListener("click", () => fileInput.click());
+    dropZone.addEventListener("dragover", e => {
+      e.preventDefault();
+      dropZone.classList.add("bg-blue-100");
+    });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("bg-blue-100"));
+    dropZone.addEventListener("drop", e => {
+      e.preventDefault();
+      dropZone.classList.remove("bg-blue-100");
+      fileInput.files = e.dataTransfer.files;
+      document.getElementById("dropText").textContent = `File terpilih: ${fileInput.files[0].name}`;
+    });
+    fileInput.addEventListener("change", () => {
+      document.getElementById("dropText").textContent = `File terpilih: ${fileInput.files[0].name}`;
+    });
+
+    // ==========================================
+    //  Extract GIF frames using browser decoder
+    // ==========================================
+    async function extractGIF(file) {
+      const url = URL.createObjectURL(file);
+      const img = document.createElement("img");
+      img.src = url;
+
+      await img.decode(); // tunggu sampai gambar siap
+      const width = 128, height = 64;
+      const tempCanvas = document.createElement("canvas");
+      tempCanvas.width = width;
+      tempCanvas.height = height;
+      const tctx = tempCanvas.getContext("2d");
+
+      // karena browser gak expose frame GIF satu-satu,
+      // kita "capture" animasinya realtime di canvas
+      // (metode ini akan menghasilkan frame sequence sesuai playback)
+      const frames = [];
+      const captureDuration = 3000; // durasi total capture (ms)
+      const frameRate = 10; // frame per detik
+
+      log("Menangkap frame dari animasi GIF...");
+      let startTime = performance.now();
+
+      while (performance.now() - startTime < captureDuration) {
+        tctx.clearRect(0, 0, width, height);
+        tctx.drawImage(img, 0, 0, width, height);
+        const imageData = tctx.getImageData(0, 0, width, height);
+        frames.push(imageData);
+        await new Promise(r => setTimeout(r, 1000 / frameRate));
+        progressBar.style.width = `${(frames.length / (captureDuration / (1000 / frameRate))) * 100}%`;
+      }
+
+      log(`Tertangkap ${frames.length} frame`);
+
+      // Convert to monochrome binary and hex
+      let output = "";
+      for (let i = 0; i < frames.length; i++) {
+        const imgData = frames[i].data;
+        let bytes = [];
+        let byte = 0, bitIndex = 0;
+
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const idx = (y * width + x) * 4;
+            const brightness = (imgData[idx] + imgData[idx + 1] + imgData[idx + 2]) / 3;
+            const bit = brightness < 128 ? 1 : 0;
+            byte = (byte << 1) | bit;
+            bitIndex++;
+            if (bitIndex === 8) {
+              bytes.push(byte);
+              byte = 0;
+              bitIndex = 0;
+            }
+          }
+        }
+
+        while (bytes.length < 1024) bytes.push(0);
+
+        output += `// 'frame${i + 1}', 128x64px\n`;
+        for (let j = 0; j < bytes.length; j++) {
+          if (j % 16 === 0) output += "\n";
+          output += "0x" + bytes[j].toString(16).padStart(2, "0") + ", ";
+        }
+        output += "\n\n";
+        log(`Frame ${i + 1} selesai dikonversi`);
+        await new Promise(r => setTimeout(r, 10));
+      }
+
+      const blob = new Blob([output], { type: "text/plain" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "frame.txt";
+      link.click();
+      progressBar.style.width = "100%";
+      log("✅ Semua frame berhasil dikonversi dan diunduh sebagai frame.txt");
+    }
+
+    document.getElementById("extractBtn").addEventListener("click", async () => {
+      const file = fileInput.files[0];
+      if (!file) return alert("Pilih file GIF terlebih dahulu!");
+      logBox.textContent = "";
+      progressBar.style.width = "0%";
+      await extractGIF(file);
+    });
+  </script>
+</body>
+</html>
