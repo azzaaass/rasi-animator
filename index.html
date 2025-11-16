@@ -1,32 +1,149 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rasi Animator</title>
-  <meta http-equiv="refresh" content="0; url=convert_frames.html">
-  <script>
-    // fallback redirect kalau meta refresh nggak jalan
-    window.location.href = "convert_frames.html";
-  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rasi Animator - Access</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
   <style>
     body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      font-family: Arial, sans-serif;
-      background: #f9fafb;
-      color: #333;
-    }
-    h1 {
-      font-weight: 500;
-      font-size: 1.2em;
-      color: #555;
+      font-family: 'Inter', sans-serif;
     }
   </style>
 </head>
-<body>
-  <h1>Mengarahkan ke Rasi Animator...</h1>
+
+<body class="bg-gray-50 min-h-screen flex items-center justify-center px-4">
+
+  <!-- CARD -->
+  <div id="pinCard"
+       class="bg-white shadow-sm border border-gray-200 rounded-2xl p-8 w-full max-w-sm">
+
+    <h2 class="text-2xl font-semibold text-gray-800 mb-1 text-center">
+      Akses Rasi Animator
+    </h2>
+
+    <p class="text-sm text-gray-500 text-center mb-6">
+      Anda harus memiliki pin untuk masuk
+    </p>
+
+    <label class="text-sm font-medium text-gray-700">PIN</label>
+    <input
+      id="pinInput"
+      type="text"
+      placeholder="masukan pin ..."
+      class="w-full border border-gray-300 bg-white rounded-lg px-4 py-2.5 mt-1 
+             focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none
+             transition"
+    />
+
+    <p id="errorText" class="text-red-500 text-sm mt-2 mb-3 hidden"></p>
+
+    <button
+      id="submitBtn"
+      class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium 
+             hover:bg-blue-700 transition mt-2"
+    >
+      Masuk
+    </button>
+
+    <div class="mt-6 text-center">
+      <p class="text-sm text-gray-500">Beli pin seharga 5k untuk akses 1 minggu</p>
+      <a
+        href="https://wa.me/6281234567890?text=Halo,%20saya%20ingin%20membeli%20PIN."
+        target="_blank"
+        class="text-blue-600 hover:text-blue-700 text-sm underline"
+      >
+        klik disini
+      </a>
+    </div>
+
+    <button id="logoutBtn"
+      class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg 
+             font-medium mt-4 hidden transition">
+      Logout
+    </button>
+  </div>
+
+  <!-- LOGIC -->
+  <script type="module">
+    import { PIN_LIST } from "./pin-data.js";
+
+    const pinInput = document.getElementById("pinInput");
+    const errorText = document.getElementById("errorText");
+    const submitBtn = document.getElementById("submitBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    const NEXT_PAGE = "convert_frames.html";
+
+    function validatePin(pin) {
+      const today = new Date().setHours(0,0,0,0);
+
+      for (const item of PIN_LIST) {
+        if (item.code === pin) {
+          const active = new Date(item.active_at).setHours(0,0,0,0);
+          const expired = new Date(item.expires_at).setHours(0,0,0,0);
+
+          if (today < active) return { ok: false, msg: "PIN belum aktif." };
+          if (today > expired) return { ok: false, msg: "PIN sudah kedaluwarsa." };
+
+          return { ok: true };
+        }
+      }
+
+      return { ok: false, msg: "PIN tidak ditemukan." };
+    }
+
+    function redirect() {
+      window.location.href = NEXT_PAGE;
+    }
+
+    function autoLoginCheck() {
+      const savedPin = localStorage.getItem("rasi_pin");
+      if (!savedPin) return false;
+
+      const res = validatePin(savedPin);
+      if (res.ok) {
+        logoutBtn.classList.remove("hidden");
+        setTimeout(() => redirect(), 700);
+        return true;
+      } else {
+        localStorage.removeItem("rasi_pin");
+        return false;
+      }
+    }
+
+    autoLoginCheck();
+
+    submitBtn.addEventListener("click", () => {
+      const pin = pinInput.value.trim();
+
+      if (!pin) {
+        errorText.textContent = "PIN tidak boleh kosong.";
+        errorText.classList.remove("hidden");
+        return;
+      }
+
+      const result = validatePin(pin);
+
+      if (!result.ok) {
+        errorText.textContent = result.msg;
+        errorText.classList.remove("hidden");
+        return;
+      }
+
+      localStorage.setItem("rasi_pin", pin);
+      localStorage.setItem("rasi_access", "allowed");
+      redirect();
+    });
+
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("rasi_pin");
+      location.reload();
+    });
+  </script>
+
 </body>
 </html>

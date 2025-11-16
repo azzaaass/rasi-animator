@@ -1,130 +1,208 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Frame Converter (TXT → BIN)</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-6">
-  <div class="bg-white rounded-2xl shadow-lg w-full max-w-2xl p-8">
-    <h1 class="text-2xl font-semibold text-gray-800 mb-1 text-center">Rasi Animator</h1>
-    <p class="text-gray-500 text-center mb-6">Konversi file <b>frame.txt</b> atau paste teks langsung menjadi <b>frame.bin</b></p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rasi Animator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import { PIN_LIST } from "./pin-data.js";
 
-    <!-- Drop Zone -->
-    <div id="dropZone"
-         class="border-2 border-dashed border-blue-400 rounded-xl p-6 text-center cursor-pointer transition hover:bg-blue-50">
-      <p id="dropText" class="text-gray-600">Tarik & letakkan file di sini<br><span class="text-sm text-gray-400">atau klik untuk memilih</span></p>
-      <input type="file" id="fileInput" accept=".txt" class="hidden" />
-    </div>
+      function validatePin(pin) {
+        const today = new Date().setHours(0, 0, 0, 0);
 
-    <!-- Text Area -->
-    <div class="mt-4">
-      <label for="textInput" class="block text-sm font-medium text-gray-700 mb-1">Atau tempel isi frame.txt di sini:</label>
-      <textarea id="textInput" rows="8" placeholder="Paste isi file frame.txt di sini..."
-                class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-blue-400 focus:border-blue-400"></textarea>
-    </div>
+        for (const item of PIN_LIST) {
+          if (item.code === pin) {
+            const active = new Date(item.active_at).setHours(0, 0, 0, 0);
+            const expired = new Date(item.expires_at).setHours(0, 0, 0, 0);
 
-    <!-- Progress -->
-    <div class="mt-6 w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-      <div id="progressBar" class="bg-blue-500 h-3 w-0 transition-all duration-300"></div>
-    </div>
+            if (today < active) return false;
+            if (today > expired) return false;
 
-    <button id="convertBtn" class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg">
-      Convert
-    </button>
-
-    <div id="log" class="bg-gray-50 rounded-lg mt-6 p-4 h-48 overflow-y-auto font-mono text-sm text-gray-700 whitespace-pre-line border border-gray-200"></div>
-    <p class="mt-4 text-center text-gray-400 italic text-xs">develop by ilmi project</p>
-  </div>
-
-  <script>
-    const FRAME_SIZE = 1024;
-    const dropZone = document.getElementById("dropZone");
-    const fileInput = document.getElementById("fileInput");
-    const textInput = document.getElementById("textInput");
-    const convertBtn = document.getElementById("convertBtn");
-    const progressBar = document.getElementById("progressBar");
-    const logBox = document.getElementById("log");
-
-    const log = (msg) => {
-      logBox.textContent += msg + "\n";
-      logBox.scrollTop = logBox.scrollHeight;
-    };
-
-    // === Drag & Drop ===
-    dropZone.addEventListener("click", () => fileInput.click());
-    dropZone.addEventListener("dragover", e => {
-      e.preventDefault();
-      dropZone.classList.add("bg-blue-100");
-    });
-    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("bg-blue-100"));
-    dropZone.addEventListener("drop", e => {
-      e.preventDefault();
-      dropZone.classList.remove("bg-blue-100");
-      fileInput.files = e.dataTransfer.files;
-      document.getElementById("dropText").textContent = `File terpilih: ${fileInput.files[0].name}`;
-    });
-    fileInput.addEventListener("change", () => {
-      document.getElementById("dropText").textContent = `File terpilih: ${fileInput.files[0].name}`;
-    });
-
-    // === Convert ===
-    convertBtn.addEventListener("click", async () => {
-      logBox.textContent = "";
-      progressBar.style.width = "0%";
-
-      let textContent = textInput.value.trim();
-
-      if (!textContent && fileInput.files.length === 0) {
-        alert("Pilih file atau tempel teks terlebih dahulu!");
-        return;
+            return true;
+          }
+        }
+        return false;
       }
 
-      if (!textContent && fileInput.files.length > 0) {
-        textContent = await fileInput.files[0].text();
+      // Ambil PIN + flag akses
+      const savedPin = localStorage.getItem("rasi_pin");
+      const accessFlag = localStorage.getItem("rasi_access");
+
+      // Validasi akses
+      if (!savedPin || !validatePin(savedPin) || accessFlag !== "allowed") {
+        // Hapus cache nakal
+        localStorage.removeItem("rasi_pin");
+        localStorage.removeItem("rasi_access");
+
+        // Tendang ke halaman login PIN
+        window.location.href = "index.html";
       }
+    </script>
+  </head>
+  <body
+    class="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-6"
+  >
+    <div class="bg-white rounded-2xl shadow-lg w-full max-w-2xl p-8">
+      <h1 class="text-2xl font-semibold text-gray-800 mb-1 text-center">
+        Rasi Animator
+      </h1>
+      <p class="text-gray-500 text-center mb-6">
+        Konversi file <b>frame.txt</b> atau paste teks langsung menjadi
+        <b>frame.bin</b>
+      </p>
 
-      const frames = textContent
-        .split(/\/\/\s*'frame.*?'\s*,?\s*\d+x\d+px/gi)
-        .map(f => f.trim())
-        .filter(f => f.length > 0);
+      <!-- Drop Zone -->
+      <div
+        id="dropZone"
+        class="border-2 border-dashed border-blue-400 rounded-xl p-6 text-center cursor-pointer transition hover:bg-blue-50"
+      >
+        <p id="dropText" class="text-gray-600">
+          Tarik & letakkan file di sini<br /><span class="text-sm text-gray-400"
+            >atau klik untuk memilih</span
+          >
+        </p>
+        <input type="file" id="fileInput" accept=".txt" class="hidden" />
+      </div>
 
-      if (frames.length === 0) {
-        log("Tidak ditemukan frame di teks!");
-        return;
-      }
+      <!-- Text Area -->
+      <div class="mt-4">
+        <label
+          for="textInput"
+          class="block text-sm font-medium text-gray-700 mb-1"
+          >Atau tempel isi frame.txt di sini:</label
+        >
+        <textarea
+          id="textInput"
+          rows="8"
+          placeholder="Paste isi file frame.txt di sini..."
+          class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-blue-400 focus:border-blue-400"
+        ></textarea>
+      </div>
 
-      log(`Ditemukan ${frames.length} frame dalam file teks`);
-      const allBytes = [];
+      <!-- Progress -->
+      <div class="mt-6 w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+        <div
+          id="progressBar"
+          class="bg-blue-500 h-3 w-0 transition-all duration-300"
+        ></div>
+      </div>
 
-      for (let i = 0; i < frames.length; i++) {
-        const frame = frames[i];
-        const hexValues = frame.match(/0x[0-9A-Fa-f]{2}/g) || [];
-        let bytes = hexValues.map(h => parseInt(h, 16));
+      <button
+        id="convertBtn"
+        class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg"
+      >
+        Convert
+      </button>
 
-        if (bytes.length < FRAME_SIZE) {
-          bytes = bytes.concat(new Array(FRAME_SIZE - bytes.length).fill(0));
-        } else if (bytes.length > FRAME_SIZE) {
-          log(`Frame ${i + 1} oversize (${bytes.length} byte), dipotong.`);
-          bytes = bytes.slice(0, FRAME_SIZE);
+      <div
+        id="log"
+        class="bg-gray-50 rounded-lg mt-6 p-4 h-48 overflow-y-auto font-mono text-sm text-gray-700 whitespace-pre-line border border-gray-200"
+      ></div>
+      <p class="mt-4 text-center text-gray-400 italic text-xs">
+        develop by ilmi project
+      </p>
+    </div>
+
+    <script>
+      const FRAME_SIZE = 1024;
+      const dropZone = document.getElementById("dropZone");
+      const fileInput = document.getElementById("fileInput");
+      const textInput = document.getElementById("textInput");
+      const convertBtn = document.getElementById("convertBtn");
+      const progressBar = document.getElementById("progressBar");
+      const logBox = document.getElementById("log");
+
+      const log = (msg) => {
+        logBox.textContent += msg + "\n";
+        logBox.scrollTop = logBox.scrollHeight;
+      };
+
+      // === Drag & Drop ===
+      dropZone.addEventListener("click", () => fileInput.click());
+      dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("bg-blue-100");
+      });
+      dropZone.addEventListener("dragleave", () =>
+        dropZone.classList.remove("bg-blue-100")
+      );
+      dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("bg-blue-100");
+        fileInput.files = e.dataTransfer.files;
+        document.getElementById(
+          "dropText"
+        ).textContent = `File terpilih: ${fileInput.files[0].name}`;
+      });
+      fileInput.addEventListener("change", () => {
+        document.getElementById(
+          "dropText"
+        ).textContent = `File terpilih: ${fileInput.files[0].name}`;
+      });
+
+      // === Convert ===
+      convertBtn.addEventListener("click", async () => {
+        logBox.textContent = "";
+        progressBar.style.width = "0%";
+
+        let textContent = textInput.value.trim();
+
+        if (!textContent && fileInput.files.length === 0) {
+          alert("Pilih file atau tempel teks terlebih dahulu!");
+          return;
         }
 
-        allBytes.push(...bytes);
-        progressBar.style.width = `${((i + 1) / frames.length) * 100}%`;
-        log(`Frame ${String(i + 1).padStart(2, "0")} (${bytes.length} byte) ditulis`);
-        await new Promise(r => setTimeout(r, 10)); // animasi progress
-      }
+        if (!textContent && fileInput.files.length > 0) {
+          textContent = await fileInput.files[0].text();
+        }
 
-      const blob = new Blob([new Uint8Array(allBytes)], { type: "application/octet-stream" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "frame.bin";
-      link.click();
+        const frames = textContent
+          .split(/\/\/\s*'frame.*?'\s*,?\s*\d+x\d+px/gi)
+          .map((f) => f.trim())
+          .filter((f) => f.length > 0);
 
-      progressBar.style.width = "100%";
-      log(`Semua frame selesai! Output disimpan ke 'frame.bin'`);
-    });
-  </script>
-</body>
+        if (frames.length === 0) {
+          log("Tidak ditemukan frame di teks!");
+          return;
+        }
+
+        log(`Ditemukan ${frames.length} frame dalam file teks`);
+        const allBytes = [];
+
+        for (let i = 0; i < frames.length; i++) {
+          const frame = frames[i];
+          const hexValues = frame.match(/0x[0-9A-Fa-f]{2}/g) || [];
+          let bytes = hexValues.map((h) => parseInt(h, 16));
+
+          if (bytes.length < FRAME_SIZE) {
+            bytes = bytes.concat(new Array(FRAME_SIZE - bytes.length).fill(0));
+          } else if (bytes.length > FRAME_SIZE) {
+            log(`Frame ${i + 1} oversize (${bytes.length} byte), dipotong.`);
+            bytes = bytes.slice(0, FRAME_SIZE);
+          }
+
+          allBytes.push(...bytes);
+          progressBar.style.width = `${((i + 1) / frames.length) * 100}%`;
+          log(
+            `Frame ${String(i + 1).padStart(2, "0")} (${
+              bytes.length
+            } byte) ditulis`
+          );
+          await new Promise((r) => setTimeout(r, 10)); // animasi progress
+        }
+
+        const blob = new Blob([new Uint8Array(allBytes)], {
+          type: "application/octet-stream",
+        });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "frame.bin";
+        link.click();
+
+        progressBar.style.width = "100%";
+        log(`Semua frame selesai! Output disimpan ke 'frame.bin'`);
+      });
+    </script>
+  </body>
 </html>
