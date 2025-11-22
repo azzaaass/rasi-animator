@@ -16,16 +16,28 @@
   <div class="bg-white w-full max-w-lg p-8 rounded-2xl shadow-sm border border-gray-200">
 
     <h1 class="text-2xl font-semibold text-gray-800 text-center">
-      PIN Aktif Hari Ini
+      Cek PIN Berdasarkan Tanggal Aktif
     </h1>
+
     <p class="text-center text-gray-500 text-sm mt-1 mb-6">
-      Menampilkan PIN yang berlaku pada tanggal sekarang
+      Pilih tanggal untuk melihat PIN yang mulai aktif pada tanggal tersebut
     </p>
 
+    <!-- INPUT DATE -->
+    <div class="mb-6">
+      <label class="text-sm font-medium text-gray-700">Tanggal</label>
+      <input
+        type="date"
+        id="dateInput"
+        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 mt-1 focus:ring-blue-400 focus:border-blue-400 transition"
+      />
+    </div>
+
+    <!-- RESULT -->
     <div id="pinContainer" class="space-y-4"></div>
 
     <p id="noPin" class="text-center text-gray-500 text-sm mt-4 hidden">
-      Tidak ada PIN yang aktif hari ini.
+      Tidak ada PIN yang mulai aktif pada tanggal ini.
     </p>
 
   </div>
@@ -35,20 +47,20 @@
 
     const pinContainer = document.getElementById("pinContainer");
     const noPin = document.getElementById("noPin");
+    const dateInput = document.getElementById("dateInput");
 
-    const today = new Date().setHours(0,0,0,0);
+    function displayPins(dateStr) {
+      pinContainer.innerHTML = "";
+      noPin.classList.add("hidden");
 
-    function isActive(pin) {
-      const start = new Date(pin.active_at).setHours(0,0,0,0);
-      const end = new Date(pin.expires_at).setHours(0,0,0,0);
-      return today >= start && today <= end;
-    }
+      // 🟢 Filter berdasarkan tanggal active_at saja (exact match)
+      const activePins = PIN_LIST.filter(pin => pin.active_at === dateStr);
 
-    const activePins = PIN_LIST.filter(isActive);
+      if (activePins.length === 0) {
+        noPin.classList.remove("hidden");
+        return;
+      }
 
-    if (activePins.length === 0) {
-      noPin.classList.remove("hidden");
-    } else {
       activePins.forEach(pin => {
         const card = document.createElement("div");
         card.className =
@@ -69,16 +81,25 @@
           </div>
 
           <div class="mt-3 text-gray-500 text-xs">
-            <p>Aktif dari: <b>${pin.active_at}</b></p>
+            <p>Mulai aktif: <b>${pin.active_at}</b></p>
             <p>Kedaluwarsa: <b>${pin.expires_at}</b></p>
           </div>
         `;
-
         pinContainer.appendChild(card);
       });
     }
 
-    // Copy Handling
+    // Default date = hari ini
+    const today = new Date().toISOString().split("T")[0];
+    dateInput.value = today;
+    displayPins(today);
+
+    // Update saat tanggal berubah
+    dateInput.addEventListener("change", e => {
+      displayPins(e.target.value);
+    });
+
+    // Copy Handler
     document.addEventListener("click", (e) => {
       if (e.target.classList.contains("copyBtn")) {
         const pin = e.target.dataset.pin;
