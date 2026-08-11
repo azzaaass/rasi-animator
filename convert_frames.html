@@ -3,107 +3,110 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rasi Animator</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Rasi Animator - Convert Frame</title>
     <link rel="icon" type="image/svg+xml" href="/images/logo.svg" />
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
-      import { PIN_LIST } from "./pin-data.js";
-
-      function validatePin(pin) {
-        const today = new Date().setHours(0, 0, 0, 0);
-
-        for (const item of PIN_LIST) {
-          if (item.code === pin) {
-            const active = new Date(item.active_at).setHours(0, 0, 0, 0);
-            const expired = new Date(item.expires_at).setHours(0, 0, 0, 0);
-
-            if (today < active) return false;
-            if (today > expired) return false;
-
-            return true;
-          }
-        }
-        return false;
-      }
-
-      // Ambil PIN + flag akses
-      const savedPin = localStorage.getItem("rasi_pin");
-      const accessFlag = localStorage.getItem("rasi_access");
-
-      // Validasi akses
-      if (!savedPin || !validatePin(savedPin) || accessFlag !== "allowed") {
-        // Hapus cache nakal
-        localStorage.removeItem("rasi_pin");
-        localStorage.removeItem("rasi_access");
-
-        // Tendang ke halaman login PIN
-        window.location.href = "index.html";
-      }
+      import { requireAuth, logout } from "./auth-guard.js";
+      requireAuth();
+      window.__raLogout = logout;
     </script>
   </head>
-  <body
-    class="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-6"
-  >
-    <div class="bg-white rounded-2xl shadow-lg w-full max-w-2xl p-8">
-      <h1 class="text-2xl font-semibold text-gray-800 mb-1 text-center">
-        Rasi Animator
-      </h1>
-      <p class="text-gray-500 text-center mb-6">
-        Konversi file <b>frame.txt</b> atau paste teks langsung menjadi
-        <b>frame.bin</b>
-      </p>
 
-      <!-- Drop Zone -->
-      <div
-        id="dropZone"
-        class="border-2 border-dashed border-blue-400 rounded-xl p-6 text-center cursor-pointer transition hover:bg-blue-50"
-      >
-        <p id="dropText" class="text-gray-600">
-          Tarik & letakkan file di sini<br /><span class="text-sm text-gray-400"
-            >atau klik untuk memilih</span
-          >
+  <!-- class "invisible" dilepas oleh auth-guard.js setelah PIN terverifikasi,
+       supaya tidak ada flash konten sebelum redirect -->
+  <body class="invisible min-h-screen p-4 sm:p-6 font-sans text-slate-700 bg-gradient-to-br from-slate-50 via-white to-indigo-50">
+    <div class="max-w-2xl mx-auto">
+
+      <!-- ROUTE NAVBAR -->
+      <header class="bg-white/85 backdrop-blur-sm border border-slate-200/80 rounded-2xl shadow-lg shadow-indigo-100/40 p-4 mb-6">
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <div class="flex items-center gap-2 min-w-0">
+            <img src="images/logo.svg" alt="logo" class="w-7 h-7 shrink-0" />
+            <span class="font-semibold text-slate-700 truncate">Rasi Animator</span>
+          </div>
+          <button id="logoutBtn" class="shrink-0 text-sm text-slate-500 hover:text-red-500 transition-colors">
+            Keluar
+          </button>
+        </div>
+
+        <!-- Tambahkan <a class="..."> baru di sini kalau modul bertambah (4, 6, dst).
+             flex-wrap otomatis menyusun tombol turun baris, tanpa perlu ubah apa pun lagi. -->
+        <nav class="flex flex-wrap gap-2">
+          <a href="convert_frames.html"
+             class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors bg-indigo-600 text-white shadow-md shadow-indigo-300/50">
+            Convert Frame
+          </a>
+          <a href="convert_images_rgb.html"
+             class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
+            Convert Image RGB
+          </a>
+        </nav>
+      </header>
+
+      <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-5 sm:p-8">
+        <h1 class="text-xl sm:text-2xl font-semibold text-slate-800 mb-1 text-center">
+          Convert Frame
+        </h1>
+        <p class="text-sm sm:text-base text-slate-500 text-center mb-6">
+          Konversi file <b>frame.txt</b> atau paste teks langsung menjadi
+          <b>frame.bin</b>
         </p>
-        <input type="file" id="fileInput" accept=".txt" class="hidden" />
-      </div>
 
-      <!-- Text Area -->
-      <div class="mt-4">
-        <label
-          for="textInput"
-          class="block text-sm font-medium text-gray-700 mb-1"
-          >Atau tempel isi frame.txt di sini:</label
-        >
-        <textarea
-          id="textInput"
-          rows="8"
-          placeholder="Paste isi file frame.txt di sini..."
-          class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-blue-400 focus:border-blue-400"
-        ></textarea>
-      </div>
-
-      <!-- Progress -->
-      <div class="mt-6 w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+        <!-- Drop Zone -->
         <div
-          id="progressBar"
-          class="bg-blue-500 h-3 w-0 transition-all duration-300"
+          id="dropZone"
+          class="border-2 border-dashed border-indigo-300 rounded-xl p-5 sm:p-6 text-center cursor-pointer transition-colors hover:bg-indigo-50/60"
+        >
+          <p id="dropText" class="text-slate-600">
+            Tarik & letakkan file di sini<br /><span class="text-sm text-slate-400"
+              >atau klik untuk memilih</span
+            >
+          </p>
+          <input type="file" id="fileInput" accept=".txt" class="hidden" />
+        </div>
+
+        <!-- Text Area -->
+        <div class="mt-4">
+          <label
+            for="textInput"
+            class="block text-sm font-medium text-slate-700 mb-1"
+            >Atau tempel isi frame.txt di sini:</label
+          >
+          <textarea
+            id="textInput"
+            rows="8"
+            placeholder="Paste isi file frame.txt di sini..."
+            class="w-full border border-slate-300 rounded-lg p-3 text-sm
+                   focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition"
+          ></textarea>
+        </div>
+
+        <!-- Progress -->
+        <div class="mt-6 w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+          <div
+            id="progressBar"
+            class="bg-indigo-500 h-3 w-0 transition-all duration-300"
+          ></div>
+        </div>
+
+        <button
+          id="convertBtn"
+          class="mt-6 w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors"
+        >
+          Convert
+        </button>
+
+        <div
+          id="log"
+          class="bg-slate-50 rounded-lg mt-6 p-4 h-48 overflow-y-auto font-mono text-sm text-slate-700 whitespace-pre-line border border-slate-200"
         ></div>
+        <p class="mt-4 text-center text-slate-400 italic text-xs">
+          develop by ilmi project
+        </p>
       </div>
-
-      <button
-        id="convertBtn"
-        class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg"
-      >
-        Convert
-      </button>
-
-      <div
-        id="log"
-        class="bg-gray-50 rounded-lg mt-6 p-4 h-48 overflow-y-auto font-mono text-sm text-gray-700 whitespace-pre-line border border-gray-200"
-      ></div>
-      <p class="mt-4 text-center text-gray-400 italic text-xs">
-        develop by ilmi project
-      </p>
     </div>
 
     <script>
@@ -114,6 +117,11 @@
       const convertBtn = document.getElementById("convertBtn");
       const progressBar = document.getElementById("progressBar");
       const logBox = document.getElementById("log");
+      const logoutBtn = document.getElementById("logoutBtn");
+
+      logoutBtn.addEventListener("click", () => {
+        if (window.__raLogout) window.__raLogout();
+      });
 
       const log = (msg) => {
         logBox.textContent += msg + "\n";
@@ -124,14 +132,14 @@
       dropZone.addEventListener("click", () => fileInput.click());
       dropZone.addEventListener("dragover", (e) => {
         e.preventDefault();
-        dropZone.classList.add("bg-blue-100");
+        dropZone.classList.add("bg-indigo-50");
       });
       dropZone.addEventListener("dragleave", () =>
-        dropZone.classList.remove("bg-blue-100")
+        dropZone.classList.remove("bg-indigo-50")
       );
       dropZone.addEventListener("drop", (e) => {
         e.preventDefault();
-        dropZone.classList.remove("bg-blue-100");
+        dropZone.classList.remove("bg-indigo-50");
         fileInput.files = e.dataTransfer.files;
         document.getElementById(
           "dropText"

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Rasi Animator - Convert Image RGB565</title>
+    <link rel="icon" type="image/svg+xml" href="/images/logo.svg" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import { requireAuth, logout } from "./auth-guard.js";
+      requireAuth();
+      window.__raLogout = logout;
+    </script>
+</head>
+
+<!-- class "invisible" dilepas oleh auth-guard.js setelah PIN terverifikasi,
+     supaya tidak ada flash konten sebelum redirect -->
+<body class="invisible min-h-screen p-4 sm:p-6 font-sans text-slate-700 bg-gradient-to-br from-slate-50 via-white to-indigo-50">
+
+<div class="max-w-7xl mx-auto">
+
+    <!-- ROUTE NAVBAR -->
+    <header class="bg-white/85 backdrop-blur-sm border border-slate-200/80 rounded-2xl shadow-lg shadow-indigo-100/40 p-4 mb-6">
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <div class="flex items-center gap-2 min-w-0">
+          <img src="images/logo.svg" alt="logo" class="w-7 h-7 shrink-0" />
+          <span class="font-semibold text-slate-700 truncate">Rasi Animator</span>
+        </div>
+        <button id="logoutBtn" class="shrink-0 text-sm text-slate-500 hover:text-red-500 transition-colors">
+          Keluar
+        </button>
+      </div>
+
+      <!-- Tambahkan <a class="..."> baru di sini kalau modul bertambah (4, 6, dst).
+           flex-wrap otomatis menyusun tombol turun baris, tanpa perlu ubah apa pun lagi. -->
+      <nav class="flex flex-wrap gap-2">
+        <a href="convert_frames.html"
+           class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
+          Convert Frame
+        </a>
+        <a href="convert_images_rgb.html"
+           class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors bg-indigo-600 text-white shadow-md shadow-indigo-300/50">
+          Convert Image RGB
+        </a>
+      </nav>
+    </header>
+
+    <h1 class="text-xl sm:text-2xl font-semibold text-slate-800 mb-4 sm:mb-6">
+        RGB565 BIN Converter
+    </h1>
+
+    <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4 sm:p-6 mb-6">
+        <div class="grid sm:grid-cols-3 gap-4">
+            <div>
+                <label class="font-medium text-sm text-slate-700 block mb-2">Upload Image</label>
+                <input type="file" id="imageInput" accept="image/*"
+                       class="w-full border border-slate-300 rounded-lg p-2 text-sm
+                              focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+            </div>
+
+            <div>
+                <label class="font-medium text-sm text-slate-700 block mb-2">Resize Mode</label>
+                <select id="resizeMode"
+                        class="w-full border border-slate-300 rounded-lg p-2 text-sm
+                               focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                    <option value="cover" selected>Cover (Bisa digeser)</option>
+                    <option value="contain">Contain</option>
+                    <option value="stretch">Stretch</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="font-medium text-sm text-slate-700 block mb-2">Output Size</label>
+                <div class="border border-slate-200 p-2 rounded-lg bg-slate-50 text-sm text-slate-600">160 × 128</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4">
+            <h2 class="font-semibold text-slate-700 mb-3 text-sm">Original</h2>
+            <canvas id="originalCanvas" class="border border-slate-200 rounded-lg w-full bg-black"></canvas>
+        </div>
+
+        <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4">
+            <h2 class="font-semibold text-slate-700 mb-1 text-sm">Resized 160×128</h2>
+            <p class="text-xs text-slate-400 mb-2">Geser foto atau klik & gunakan panah keyboard</p>
+            <canvas id="resizedCanvas" 
+                    width="160" height="128" 
+                    class="border border-slate-200 rounded-lg w-full cursor-grab active:cursor-grabbing focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-black" 
+                    tabindex="0"></canvas>
+        </div>
+
+        <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4 sm:col-span-2 lg:col-span-1">
+            <h2 class="font-semibold text-slate-700 mb-3 text-sm">RGB565 Preview</h2>
+            <canvas id="rgbCanvas" width="160" height="128" class="border border-slate-200 rounded-lg w-full bg-black"></canvas>
+        </div>
+    </div>
+
+    <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-5 sm:p-6 mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="text-sm text-slate-600">
+            <div>Resolution: <span class="font-semibold text-slate-800">160 × 128</span></div>
+            <div>File Size: <span id="fileSize" class="font-semibold text-slate-800">0 bytes</span></div>
+        </div>
+        <button id="downloadBtn" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors">
+            Download BIN
+        </button>
+    </div>
+
+    <p class="mt-4 text-center text-slate-400 italic text-xs">
+      develop by ilmi project
+    </p>
+</div>
+
+<script>
+const TARGET_W = 160;
+const TARGET_H = 128;
+
+const imageInput = document.getElementById("imageInput");
+const resizeMode = document.getElementById("resizeMode");
+const logoutBtn = document.getElementById("logoutBtn");
+
+logoutBtn.addEventListener("click", () => {
+  if (window.__raLogout) window.__raLogout();
+});
+
+const originalCanvas = document.getElementById("originalCanvas");
+const resizedCanvas = document.getElementById("resizedCanvas");
+const rgbCanvas = document.getElementById("rgbCanvas");
+
+const originalCtx = originalCanvas.getContext("2d", { willReadFrequently: true });
+const resizedCtx = resizedCanvas.getContext("2d", { willReadFrequently: true });
+const rgbCtx = rgbCanvas.getContext("2d", { willReadFrequently: true });
+
+let rgb565Buffer = null;
+let currentImage = null;
+
+// Variabel untuk Panning/Geser
+let offsetX = 0;
+let offsetY = 0;
+let imgDrawW = 0;
+let imgDrawH = 0;
+
+// Variabel state Dragging
+let isDragging = false;
+let startX = 0;
+let startY = 0;
+let initialOffsetX = 0;
+let initialOffsetY = 0;
+
+// Event Listeners Dasar
+imageInput.addEventListener("change", handleImageUpload);
+resizeMode.addEventListener("change", () => {
+    resetOffset(); // Kembalikan ke tengah saat mode berubah
+    renderImage();
+});
+
+// --- FUNGSI MENGAMBIL KOORDINAT MOUSE/TOUCH ---
+function getClientPos(e) {
+    if (e.touches && e.touches.length > 0) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+    return { x: e.clientX, y: e.clientY };
+}
+
+// --- EVENT LISTENERS UNTUK DRAG & DROP ---
+function startDrag(e) {
+    if (!currentImage || resizeMode.value === "stretch") return;
+    isDragging = true;
+    const pos = getClientPos(e);
+    startX = pos.x;
+    startY = pos.y;
+    initialOffsetX = offsetX;
+}
+
+function onDrag(e) {
+    if (!isDragging) return;
+    e.preventDefault(); // Mencegah scrolling halaman saat digeser di HP
+
+    const pos = getClientPos(e);
+    // Menyesuaikan rasio pergeseran mouse dengan ukuran canvas aktual di layar vs resolusi 160x128
+    const rect = resizedCanvas.getBoundingClientRect();
+    const scaleX = resizedCanvas.width / rect.width;
+    const scaleY = resizedCanvas.height / rect.height;
+
+    const dx = (pos.x - startX) * scaleX;
+    const dy = (pos.y - startY) * scaleY;
+
+    offsetX = initialOffsetX + dx;
+    offsetY = initialOffsetY + dy;
+    
+    renderImage();
+}
+
+function endDrag() {
+    isDragging = false;
+}
+
+// Mouse Events
+resizedCanvas.addEventListener("mousedown", startDrag);
+window.addEventListener("mousemove", onDrag);
+window.addEventListener("mouseup", endDrag);
+
+// Touch Events (Untuk HP)
+resizedCanvas.addEventListener("touchstart", startDrag, { passive: false });
+window.addEventListener("touchmove", onDrag, { passive: false });
+window.addEventListener("touchend", endDrag);
+
+// --- EVENT LISTENER UNTUK KEYBOARD (PANAH) ---
+resizedCanvas.addEventListener("keydown", (e) => {
+    if (!currentImage || resizeMode.value === "stretch") return;
+
+    const step = 5; // Kecepatan geser pixel
+    let moved = false;
+
+    if (e.key === "ArrowUp") { offsetY -= step; moved = true; }
+    else if (e.key === "ArrowDown") { offsetY += step; moved = true; }
+    else if (e.key === "ArrowLeft") { offsetX -= step; moved = true; }
+    else if (e.key === "ArrowRight") { offsetX += step; moved = true; }
+
+    if (moved) {
+        e.preventDefault(); // Mencegah scrolling layar
+        renderImage();
+    }
+});
+
+// --- LOGIKA UTAMA ---
+
+function handleImageUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const img = new Image();
+    img.onload = () => {
+        currentImage = img;
+        
+        // Tampilkan gambar original
+        originalCanvas.width = img.width;
+        originalCanvas.height = img.height;
+        originalCtx.clearRect(0, 0, img.width, img.height);
+        originalCtx.drawImage(img, 0, 0);
+
+        resetOffset();
+        renderImage();
+    };
+    img.src = URL.createObjectURL(file);
+}
+
+function resetOffset() {
+    offsetX = 0;
+    offsetY = 0;
+}
+
+function renderImage() {
+    if (!currentImage) return;
+
+    const img = currentImage;
+    resizedCtx.clearRect(0, 0, TARGET_W, TARGET_H);
+    resizedCtx.fillStyle = "black";
+    resizedCtx.fillRect(0, 0, TARGET_W, TARGET_H);
+
+    const mode = resizeMode.value;
+
+    if (mode === "stretch") {
+        resizedCtx.drawImage(img, 0, 0, TARGET_W, TARGET_H);
+    } else {
+        const scaleX = TARGET_W / img.width;
+        const scaleY = TARGET_H / img.height;
+        const scale = mode === "cover" ? Math.max(scaleX, scaleY) : Math.min(scaleX, scaleY);
+
+        imgDrawW = img.width * scale;
+        imgDrawH = img.height * scale;
+
+        // Validasi dan Batasi (Clamp) Offset agar gambar tidak keluar batas
+        if (imgDrawW > TARGET_W) {
+            // Bisa digeser kiri-kanan
+            offsetX = Math.max(TARGET_W - imgDrawW, Math.min(0, offsetX));
+        } else {
+            // Kunci di tengah
+            offsetX = (TARGET_W - imgDrawW) / 2;
+        }
+
+        if (imgDrawH > TARGET_H) {
+            // Bisa digeser atas-bawah
+            offsetY = Math.max(TARGET_H - imgDrawH, Math.min(0, offsetY));
+        } else {
+            // Kunci di tengah
+            offsetY = (TARGET_H - imgDrawH) / 2;
+        }
+
+        resizedCtx.drawImage(img, offsetX, offsetY, imgDrawW, imgDrawH);
+    }
+
+    convertRGB565();
+}
+
+function convertRGB565() {
+    const imageData = resizedCtx.getImageData(0, 0, TARGET_W, TARGET_H);
+    const data = imageData.data;
+
+    rgb565Buffer = new Uint8Array(TARGET_W * TARGET_H * 2);
+    const preview = rgbCtx.createImageData(TARGET_W, TARGET_H);
+
+    let p = 0;
+
+    for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+
+        const value = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+
+        rgb565Buffer[p++] = value >> 8;
+        rgb565Buffer[p++] = value & 0xFF;
+
+        const r5 = (value >> 11) & 0x1F;
+        const g6 = (value >> 5) & 0x3F;
+        const b5 = value & 0x1F;
+
+        preview.data[i] = (r5 * 255) / 31;
+        preview.data[i + 1] = (g6 * 255) / 63;
+        preview.data[i + 2] = (b5 * 255) / 31;
+        preview.data[i + 3] = 255;
+    }
+
+    rgbCtx.putImageData(preview, 0, 0);
+    document.getElementById("fileSize").innerText = rgb565Buffer.length + " bytes";
+}
+
+document.getElementById("downloadBtn").addEventListener("click", () => {
+    if (!rgb565Buffer) {
+        alert("Upload image first.");
+        return;
+    }
+
+    const blob = new Blob([rgb565Buffer], { type: "application/octet-stream" });
+    const a = document.createElement("a");
+
+    a.href = URL.createObjectURL(blob);
+    a.download = "image.bin";
+    a.click();
+
+    URL.revokeObjectURL(a.href);
+});
+
+</script>
+
+</body>
+</html>

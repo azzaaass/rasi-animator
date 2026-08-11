@@ -1,0 +1,7 @@
+# File ini TIDAK ikut ter-deploy ke Vercel.
+# view_pin.html adalah tool internal untuk melihat daftar PIN - jangan sampai publik.
+view_pin.html
+
+# File project lokal, tidak perlu ikut deploy
+.git
+README.md
