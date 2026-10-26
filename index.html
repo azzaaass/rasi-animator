@@ -4,11 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>Rasi Animator - Access</title>
-    <link rel="icon" type="image/svg+xml" href="/images/logo.svg" />
+    <title>Ilmi Project Animator - Access</title>
+    <link rel="icon" type="image/svg+xml" href="images/logo.svg" />
 
-    <!-- Tailwind -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css" />
   </head>
 
   <body
@@ -20,11 +19,11 @@
       class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/60 p-8 w-full max-w-sm"
     >
       <div class="flex justify-center mb-4">
-        <img src="images/logo.svg" alt="Rasi Animator" class="w-12 h-12" />
+        <img src="images/logo.svg" alt="Ilmi Project Animator" class="w-12 h-12" />
       </div>
 
       <h2 class="text-2xl font-semibold text-slate-800 mb-1 text-center">
-        Akses Rasi Animator
+        Akses Ilmi Project Animator
       </h2>
 
       <p class="text-sm text-slate-500 text-center mb-6">
@@ -73,7 +72,7 @@
 
     <!-- LOGIC -->
     <script type="module">
-      import { validatePin } from "./auth-guard.js";
+      import { validatePin } from "./js/auth-guard.js";
 
       const pinInput = document.getElementById("pinInput");
       const errorText = document.getElementById("errorText");
@@ -82,8 +81,8 @@
 
       // Halaman tujuan default setelah login.
       // Setelah masuk, user tetap bisa pindah ke halaman lain lewat tombol
-      // route yang ada di navbar convert_frames.html / convert_images_rgb.html.
-      const NEXT_PAGE = "convert_frames.html";
+      // route yang ada di navbar setiap halaman.
+      const NEXT_PAGE = "pages/convert_gif.html";
 
       function redirect() {
         window.location.href = NEXT_PAGE;

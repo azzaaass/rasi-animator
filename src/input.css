@@ -1,0 +1,132 @@
+/* Sumber CSS. Jangan edit css/style.css langsung, jalankan: npm run build:css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Safari tetap menampilkan segitiga <details> walau summary diberi list-none */
+  summary::-webkit-details-marker {
+    display: none;
+  }
+}
+
+@layer components {
+  /* Canvas kecil (128x64) diperbesar tanpa blur */
+  .pixelated {
+    image-rendering: pixelated;
+  }
+
+  /* Toggle switch: <input type="checkbox" class="peer sr-only"> lalu <span class="switch"></span> */
+  .switch {
+    position: relative;
+    flex-shrink: 0;
+    width: 2.75rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    background: theme("colors.slate.300");
+    transition: background-color 150ms;
+  }
+  .switch::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 9999px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+    transition: transform 150ms;
+  }
+  .peer:checked ~ .switch {
+    background: theme("colors.indigo.600");
+  }
+  .peer:checked ~ .switch::after {
+    transform: translateX(1.25rem);
+  }
+  .peer:focus-visible ~ .switch {
+    box-shadow: 0 0 0 3px rgb(99 102 241 / 0.35);
+  }
+
+  /* Slider rentang dengan dua thumb (mulai & selesai) dari dua <input type="range"> yang ditumpuk */
+  .dual-range {
+    position: relative;
+    height: 2.5rem;
+  }
+  .dual-range-track,
+  .dual-range-fill {
+    position: absolute;
+    top: 50%;
+    height: 6px;
+    transform: translateY(-50%);
+    border-radius: 9999px;
+  }
+  .dual-range-track {
+    left: 0;
+    right: 0;
+    background: theme("colors.slate.200");
+  }
+  .dual-range-fill {
+    background: theme("colors.indigo.500");
+  }
+  .dual-range-playhead {
+    position: absolute;
+    top: 20%;
+    bottom: 20%;
+    width: 2px;
+    margin-left: -1px;
+    border-radius: 1px;
+    background: theme("colors.amber.500");
+    pointer-events: none;
+  }
+  .dual-range input[type="range"] {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    height: 26px;
+    margin: 0;
+    background: transparent;
+    pointer-events: none;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .dual-range input[type="range"]::-webkit-slider-runnable-track {
+    height: 26px;
+    background: transparent;
+  }
+  .dual-range input[type="range"]::-moz-range-track {
+    height: 26px;
+    background: transparent;
+  }
+  .dual-range input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    pointer-events: auto;
+    width: 26px;
+    height: 26px;
+    border-radius: 9999px;
+    background: #fff;
+    border: 3px solid theme("colors.indigo.600");
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+    cursor: grab;
+  }
+  .dual-range input[type="range"]::-moz-range-thumb {
+    box-sizing: border-box;
+    pointer-events: auto;
+    width: 26px;
+    height: 26px;
+    border-radius: 9999px;
+    background: #fff;
+    border: 3px solid theme("colors.indigo.600");
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+    cursor: grab;
+  }
+  .dual-range input[type="range"]:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 4px rgb(99 102 241 / 0.35);
+  }
+  .dual-range input[type="range"]:focus-visible::-moz-range-thumb {
+    box-shadow: 0 0 0 4px rgb(99 102 241 / 0.35);
+  }
+}

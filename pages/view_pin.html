@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Cek PIN Aktif - Ilmi Project Animator</title>
+  <link rel="icon" type="image/svg+xml" href="../images/logo.svg" />
+
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-4 sm:p-6 font-sans text-slate-700 bg-gradient-to-br from-slate-50 via-white to-indigo-50">
+
+  <!-- LOGIN ADMIN (password terpisah dari PIN pelanggan) -->
+  <div id="loginCard" class="hidden bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/60 p-8 w-full max-w-sm">
+    <div class="flex justify-center mb-4">
+      <img src="../images/logo.svg" alt="Ilmi Project Animator" class="w-12 h-12" />
+    </div>
+
+    <h1 class="text-2xl font-semibold text-slate-800 mb-1 text-center">
+      Admin
+    </h1>
+
+    <p class="text-sm text-slate-500 text-center mb-6">
+      Masukkan password untuk melihat daftar PIN
+    </p>
+
+    <label for="passwordInput" class="text-sm font-medium text-slate-700">Password</label>
+    <input
+      type="password"
+      id="passwordInput"
+      autocomplete="current-password"
+      class="w-full border border-slate-300 bg-white rounded-lg px-4 py-2.5 mt-1 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition"
+    />
+
+    <p id="loginError" class="text-red-500 text-sm mt-2 hidden">Password salah.</p>
+
+    <button
+      id="loginBtn"
+      class="w-full py-2.5 rounded-lg mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors">
+      Masuk
+    </button>
+  </div>
+
+  <!-- DAFTAR PIN -->
+  <div id="pinApp" class="hidden bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/60 p-6 sm:p-8 w-full max-w-lg">
+
+    <div class="flex items-center justify-between gap-3 mb-6">
+      <div class="flex items-center gap-2 min-w-0">
+        <img src="../images/logo.svg" alt="logo" class="w-7 h-7 shrink-0" />
+        <span class="font-semibold text-slate-700 truncate">Ilmi Project Animator</span>
+      </div>
+      <button id="logoutBtn" class="shrink-0 text-sm text-slate-500 hover:text-red-500 transition-colors">
+        Keluar
+      </button>
+    </div>
+
+    <h1 class="text-xl sm:text-2xl font-semibold text-slate-800 text-center">
+      Cek PIN Berdasarkan Tanggal Aktif
+    </h1>
+
+    <p class="text-center text-slate-500 text-sm mt-1 mb-6">
+      Pilih tanggal untuk melihat PIN yang mulai aktif pada tanggal tersebut
+    </p>
+
+    <!-- INPUT DATE -->
+    <div class="mb-6">
+      <label for="dateInput" class="text-sm font-medium text-slate-700">Tanggal</label>
+      <input
+        type="date"
+        id="dateInput"
+        class="w-full border border-slate-300 bg-white rounded-lg px-4 py-2.5 mt-1 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition"
+      />
+    </div>
+
+    <!-- RESULT -->
+    <div id="pinContainer" class="space-y-3"></div>
+
+    <p id="noPin" class="text-center text-slate-500 text-sm mt-4 hidden">
+      Tidak ada PIN yang mulai aktif pada tanggal ini.
+    </p>
+
+  </div>
+
+  <script type="module">
+    import { PIN_LIST } from "../js/pin-data.js";
+    import { isAdmin, loginAdmin, logoutAdmin } from "../js/admin-guard.js";
+
+    const loginCard = document.getElementById("loginCard");
+    const pinApp = document.getElementById("pinApp");
+    const passwordInput = document.getElementById("passwordInput");
+    const loginError = document.getElementById("loginError");
+    const loginBtn = document.getElementById("loginBtn");
+
+    const pinContainer = document.getElementById("pinContainer");
+    const noPin = document.getElementById("noPin");
+    const dateInput = document.getElementById("dateInput");
+
+    // --- AUTH ADMIN ---
+    function showApp() {
+      loginCard.classList.add("hidden");
+      pinApp.classList.remove("hidden");
+
+      // Default date = hari ini
+      const today = new Date().toISOString().split("T")[0];
+      dateInput.value = today;
+      displayPins(today);
+    }
+
+    function showLogin() {
+      pinApp.classList.add("hidden");
+      pinContainer.innerHTML = "";
+      loginCard.classList.remove("hidden");
+      passwordInput.value = "";
+      passwordInput.focus();
+    }
+
+    loginBtn.addEventListener("click", async () => {
+      const ok = await loginAdmin(passwordInput.value);
+      if (!ok) {
+        loginError.classList.remove("hidden");
+        passwordInput.select();
+        return;
+      }
+      loginError.classList.add("hidden");
+      showApp();
+    });
+
+    passwordInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") loginBtn.click();
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      logoutAdmin();
+      showLogin();
+    });
+
+    // --- DAFTAR PIN ---
+    function displayPins(dateStr) {
+      pinContainer.innerHTML = "";
+      noPin.classList.add("hidden");
+
+      // 🟢 Filter berdasarkan tanggal active_at saja (exact match)
+      const activePins = PIN_LIST.filter(pin => pin.active_at === dateStr);
+
+      if (activePins.length === 0) {
+        noPin.classList.remove("hidden");
+        return;
+      }
+
+      activePins.forEach(pin => {
+        const card = document.createElement("div");
+        card.className =
+          "p-4 border border-slate-200 rounded-2xl bg-slate-50/80 hover:bg-indigo-50/60 transition-colors";
+
+        card.innerHTML = `
+          <div class="flex justify-between items-center gap-3">
+            <div>
+              <p class="text-slate-500 text-sm">PIN</p>
+              <p class="text-xl font-semibold text-slate-800 tracking-wider">${pin.code}</p>
+            </div>
+
+            <button
+              class="copyBtn bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              data-pin="${pin.code}" data-expires_at="${pin.expires_at}">
+              Copy
+            </button>
+          </div>
+
+          <div class="mt-3 text-slate-500 text-xs">
+            <p>Mulai aktif: <b class="text-slate-700">${pin.active_at}</b></p>
+            <p>Kedaluwarsa: <b class="text-slate-700">${pin.expires_at}</b></p>
+          </div>
+        `;
+        pinContainer.appendChild(card);
+      });
+    }
+
+    // Update saat tanggal berubah
+    dateInput.addEventListener("change", e => {
+      displayPins(e.target.value);
+    });
+
+    // Copy Handler
+    // Warna indigo dilepas dulu, kalau tidak class hijau akan kalah oleh urutan CSS
+    function setCopied(btn, copied) {
+      btn.textContent = copied ? "Copied!" : "Copy";
+      btn.classList.toggle("bg-indigo-600", !copied);
+      btn.classList.toggle("hover:bg-indigo-700", !copied);
+      btn.classList.toggle("bg-emerald-600", copied);
+    }
+
+    document.addEventListener("click", (e) => {
+      if (e.target.classList.contains("copyBtn")) {
+        const pin = e.target.dataset.pin;
+        const expires_at = e.target.dataset.expires_at;
+        navigator.clipboard.writeText("Pin anda: " + pin + "\nBerlaku sampai " + expires_at);
+
+        setCopied(e.target, true);
+        setTimeout(() => setCopied(e.target, false), 1200);
+      }
+    });
+
+    // Sesi admin tersimpan di sessionStorage -> langsung tampil tanpa login ulang selama tab masih terbuka
+    if (isAdmin()) showApp();
+    else showLogin();
+  </script>
+
+</body>
+</html>

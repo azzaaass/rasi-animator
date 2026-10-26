@@ -1,4 +1,9 @@
 {
+  "redirects": [
+    { "source": "/convert_frames.html", "destination": "/pages/convert_gif.html", "permanent": true },
+    { "source": "/convert_images_rgb.html", "destination": "/pages/convert_images_rgb.html", "permanent": true },
+    { "source": "/view_pin.html", "destination": "/pages/view_pin.html", "permanent": true }
+  ],
   "headers": [
     {
       "source": "/(.*)",

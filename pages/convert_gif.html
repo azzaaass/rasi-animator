@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Ilmi Project Animator - Animasi Rasi</title>
+    <link rel="icon" type="image/svg+xml" href="../images/logo.svg" />
+
+    <link rel="stylesheet" href="../css/style.css" />
+    <script type="module">
+      import { requireAuth, logout } from "../js/auth-guard.js";
+      requireAuth();
+      window.__raLogout = logout;
+    </script>
+</head>
+
+<!-- class "invisible" dilepas oleh auth-guard.js setelah PIN terverifikasi,
+     supaya tidak ada flash konten sebelum redirect -->
+<body class="invisible min-h-screen p-4 sm:p-6 pb-28 lg:pb-6 font-sans text-slate-700 bg-gradient-to-br from-slate-50 via-white to-indigo-50">
+
+<div class="max-w-5xl mx-auto">
+
+    <!-- ROUTE NAVBAR -->
+    <header class="bg-white/85 backdrop-blur-sm border border-slate-200/80 rounded-2xl shadow-md shadow-indigo-100/40 px-3 py-2.5 sm:px-4 sm:py-3 mb-4 sm:mb-6">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <div class="flex items-center gap-2 min-w-0">
+          <img src="../images/logo.svg" alt="logo" class="w-6 h-6 shrink-0" />
+          <span class="text-sm font-semibold text-slate-700 truncate">Ilmi Project Animator</span>
+        </div>
+        <button id="logoutBtn" class="shrink-0 text-xs sm:text-sm text-slate-500 hover:text-red-500 transition-colors">
+          Keluar
+        </button>
+      </div>
+
+      <!-- Tambahkan <a class="..."> baru di sini kalau modul bertambah.
+           flex-wrap otomatis menyusun tombol turun baris, tanpa perlu ubah apa pun lagi. -->
+      <nav class="flex flex-wrap gap-1.5">
+        <a href="convert_gif.html"
+           class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-indigo-600 text-white shadow-sm shadow-indigo-300/50">
+          Animasi Rasi
+        </a>
+        <a href="convert_images_rgb.html"
+           class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
+          Background Rasi RGB
+        </a>
+        <a href="animasi_rgb.html"
+           class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
+          Animasi Rasi RGB
+        </a>
+      </nav>
+    </header>
+
+    <!-- STEPPER (diisi JS) -->
+    <ol id="stepper" class="flex items-start mb-4 sm:mb-6" aria-label="Langkah"></ol>
+
+    <main class="bg-white/95 border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4 sm:p-6">
+
+        <!-- ================= 1. INPUT ================= -->
+        <section data-step="1">
+            <h2 class="font-semibold text-slate-800">1. Input</h2>
+            <p class="text-sm text-slate-500 mb-5">Pilih file MP4, GIF, atau kode Arduino, lalu jenis layarnya</p>
+
+            <div class="grid lg:grid-cols-2 gap-5 lg:gap-6">
+                <div class="space-y-4">
+                    <div id="dropZone"
+                         class="border-2 border-dashed border-indigo-300 rounded-2xl p-6 sm:p-8 text-center cursor-pointer transition-colors hover:bg-indigo-50/60">
+                        <p id="dropText" class="text-slate-600">
+                            <span class="font-semibold text-indigo-600">Pilih file</span> atau tarik ke sini
+                        </p>
+                        <p class="text-xs text-slate-400 mt-1">MP4, GIF, .cpp, .h, .ino, .txt</p>
+                        <input type="file" id="fileInput" accept="video/mp4,video/*,image/gif,.gif,.cpp,.h,.ino,.txt" class="hidden" />
+                    </div>
+
+                    <details id="codeDetails" class="group border border-slate-200 rounded-2xl">
+                        <summary class="flex items-center justify-between gap-3 cursor-pointer p-4 text-sm font-medium text-slate-700 list-none">
+                            Atau tempel kode Arduino
+                            <svg viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180"><path fill-rule="evenodd" d="M5.2 7.2a1 1 0 011.4 0L10 10.6l3.4-3.4a1 1 0 111.4 1.4l-4.1 4.1a1 1 0 01-1.4 0L5.2 8.6a1 1 0 010-1.4z" clip-rule="evenodd"/></svg>
+                        </summary>
+                        <div class="px-4 pb-4">
+                            <textarea id="codeInput" rows="6" spellcheck="false"
+                                      placeholder="// 'frame_001', 128x64px&#10;const unsigned char epd_bitmap_frame_001 [] PROGMEM = {&#10;    0x00, 0x00, ..."
+                                      class="w-full border border-slate-300 bg-white rounded-lg p-3 font-mono text-base sm:text-xs whitespace-pre
+                                             focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition"></textarea>
+                            <p class="text-xs text-slate-400 mt-1">Format image2cpp (horizontal, 1 bit per pixel), seperti hasil langkah Hasil.</p>
+                        </div>
+                    </details>
+
+                    <div id="sourceCard" class="hidden">
+                        <div class="flex items-center gap-3 p-4 rounded-2xl bg-indigo-50 border border-indigo-100">
+                            <span id="sourceBadge" class="shrink-0 px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-xs font-semibold tracking-wide"></span>
+                            <div class="min-w-0">
+                                <div id="sourceName" class="font-medium text-slate-800 truncate"></div>
+                                <div id="sourceMeta" class="text-xs text-slate-500"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <p id="inputError" class="hidden text-sm text-red-500"></p>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-medium text-slate-700 mb-2">Jenis layar</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="screen" value="normal" class="peer sr-only" checked>
+                            <div class="h-full rounded-2xl border-2 border-slate-200 p-3 transition-colors peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-400">
+                                <div class="aspect-[2/1] rounded-lg bg-black p-2 flex flex-col gap-1.5">
+                                    <div class="h-1/4 flex items-center gap-1">
+                                        <span class="h-1 w-6 rounded-sm bg-white"></span><span class="h-1 w-3 rounded-sm bg-white"></span>
+                                    </div>
+                                    <div class="flex-1 flex items-end gap-1">
+                                        <span class="w-2 h-1/3 rounded-sm bg-white"></span><span class="w-2 h-2/3 rounded-sm bg-white"></span>
+                                        <span class="w-2 h-full rounded-sm bg-white"></span><span class="w-2 h-1/2 rounded-sm bg-white"></span>
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-sm font-medium text-slate-800">Normal</div>
+                                <div class="text-xs text-slate-500">Satu warna</div>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="screen" value="duo" class="peer sr-only">
+                            <div class="h-full rounded-2xl border-2 border-slate-200 p-3 transition-colors peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-400">
+                                <div class="aspect-[2/1] rounded-lg bg-black p-2 flex flex-col gap-1.5">
+                                    <div class="h-1/4 flex items-center gap-1">
+                                        <span class="h-1 w-6 rounded-sm bg-yellow-400"></span><span class="h-1 w-3 rounded-sm bg-yellow-400"></span>
+                                    </div>
+                                    <div class="flex-1 flex items-end gap-1">
+                                        <span class="w-2 h-1/3 rounded-sm bg-sky-400"></span><span class="w-2 h-2/3 rounded-sm bg-sky-400"></span>
+                                        <span class="w-2 h-full rounded-sm bg-sky-400"></span><span class="w-2 h-1/2 rounded-sm bg-sky-400"></span>
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-sm font-medium text-slate-800">Biru-Kuning</div>
+                                <div class="text-xs text-slate-500">16 baris atas kuning</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 2. DURASI ================= -->
+        <section data-step="2" class="hidden">
+            <h2 class="font-semibold text-slate-800">2. Durasi</h2>
+            <p class="text-sm text-slate-500 mb-5">Pilih bagian video / GIF yang dipakai</p>
+
+            <div class="grid lg:grid-cols-2 gap-5 lg:gap-6 items-start">
+                <div class="relative rounded-2xl bg-black overflow-hidden">
+                    <video id="video" class="align-top w-full max-h-64 sm:max-h-80 object-contain" muted playsinline preload="auto"></video>
+                    <canvas id="gifCanvas" class="hidden align-top w-full max-h-64 sm:max-h-80 object-contain"></canvas>
+                    <button id="playBtn" type="button" aria-label="Putar"
+                            class="absolute bottom-3 left-3 w-11 h-11 rounded-full bg-white/90 hover:bg-white text-indigo-600 shadow flex items-center justify-center transition-colors"></button>
+                    <span id="timeLabel" class="absolute bottom-3 right-3 px-2 py-1 rounded-lg bg-black/60 text-white text-xs font-mono">0.00 s</span>
+                </div>
+
+                <div class="space-y-5">
+                    <div>
+                        <div class="flex justify-between gap-3 text-sm">
+                            <span class="font-medium text-slate-700">Rentang</span>
+                            <span id="rangeLabel" class="text-slate-500"></span>
+                        </div>
+                        <div class="dual-range mt-1">
+                            <div class="dual-range-track"></div>
+                            <div id="rangeFill" class="dual-range-fill"></div>
+                            <div id="playhead" class="dual-range-playhead hidden"></div>
+                            <input type="range" id="startRange" min="0" max="1" step="0.01" value="0" aria-label="Mulai">
+                            <input type="range" id="endRange" min="0" max="1" step="0.01" value="1" aria-label="Selesai">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mt-2">
+                            <label class="text-xs text-slate-600">
+                                Mulai (detik)
+                                <input type="number" id="startInput" min="0" step="0.1" inputmode="decimal"
+                                       class="mt-1 w-full border border-slate-300 bg-white rounded-lg px-3 py-2 text-base sm:text-sm
+                                              focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                            </label>
+                            <label class="text-xs text-slate-600">
+                                Selesai (detik)
+                                <input type="number" id="endInput" min="0" step="0.1" inputmode="decimal"
+                                       class="mt-1 w-full border border-slate-300 bg-white rounded-lg px-3 py-2 text-base sm:text-sm
+                                              focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="fpsRow" class="flex items-center justify-between gap-3">
+                        <label for="fpsInput" class="text-sm font-medium text-slate-700">
+                            FPS
+                            <span class="block text-xs font-normal text-slate-500">Jumlah frame per detik yang diambil dari video</span>
+                        </label>
+                        <input type="number" id="fpsInput" min="1" max="60" step="1" value="10" inputmode="numeric"
+                               class="w-24 border border-slate-300 bg-white rounded-lg px-3 py-2 text-base sm:text-sm
+                                      focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                    </div>
+
+                    <p id="durationEstimate" class="text-sm text-slate-500"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 3. ADJUST ================= -->
+        <section data-step="3" class="hidden">
+            <h2 class="font-semibold text-slate-800">3. Adjust</h2>
+            <p class="text-sm text-slate-500 mb-5">Atur ukuran, crop, dan hitam-putihnya</p>
+
+            <!-- Di HP pratinjau menempel di atas saat slider digeser; di desktop jadi 2 kolom -->
+            <div class="grid lg:grid-cols-2 lg:grid-rows-[auto_1fr] gap-x-6 gap-y-5">
+                <div class="sticky top-0 z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 pt-2 pb-3 bg-white/95 backdrop-blur border-b border-slate-200
+                            lg:static lg:mx-0 lg:px-0 lg:pt-0 lg:pb-0 lg:bg-transparent lg:backdrop-blur-none lg:border-0 lg:col-start-1 lg:row-start-1">
+                    <div class="flex justify-between items-baseline mb-2">
+                        <span class="text-sm font-medium text-slate-700">Pratinjau</span>
+                        <span id="adjustSizeLabel" class="text-xs text-slate-500"></span>
+                    </div>
+                    <div class="rounded-xl bg-slate-950 p-2 sm:p-3 shadow-lg ring-1 ring-slate-800">
+                        <canvas id="oledCanvas" class="pixelated block w-full rounded-sm bg-black"></canvas>
+                    </div>
+                    <div class="flex items-center gap-3 mt-2">
+                        <input type="range" id="posInput" min="0" max="1" step="0.01" value="0" aria-label="Posisi pratinjau"
+                               class="flex-1 accent-indigo-600">
+                        <span id="posValue" class="w-16 text-right text-xs font-mono text-slate-500">0.00 s</span>
+                    </div>
+                </div>
+
+                <div id="cropBox" class="lg:col-start-1 lg:row-start-2">
+                    <p class="text-xs text-slate-400 mb-2">Geser kotak untuk memilih area crop</p>
+                    <canvas id="sourceCanvas" class="block max-w-full max-h-64 mx-auto rounded-lg border border-slate-200 bg-black touch-none cursor-move"></canvas>
+                </div>
+
+                <div class="space-y-5 lg:col-start-2 lg:row-start-1 lg:row-span-2">
+                    <div>
+                        <div class="text-sm font-medium text-slate-700 mb-2">Ukuran</div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <input type="number" id="widthInput" min="1" max="1024" step="1" value="128" inputmode="numeric" aria-label="Lebar"
+                                   class="w-20 border border-slate-300 bg-white rounded-lg px-3 py-2 text-base sm:text-sm
+                                          focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                            <span class="text-slate-400">&times;</span>
+                            <input type="number" id="heightInput" min="1" max="1024" step="1" value="64" inputmode="numeric" aria-label="Tinggi"
+                                   class="w-20 border border-slate-300 bg-white rounded-lg px-3 py-2 text-base sm:text-sm
+                                          focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                            <span class="text-sm text-slate-500 mr-1">px</span>
+                            <button type="button" data-size="128x64" class="px-3 py-2 rounded-xl text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">128×64</button>
+                            <button type="button" data-size="128x32" class="px-3 py-2 rounded-xl text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">128×32</button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <label class="flex items-center justify-between gap-3 cursor-pointer">
+                            <span>
+                                <span class="block text-sm font-medium text-slate-700">Crop (anti gepeng)</span>
+                                <span class="block text-xs text-slate-500">Potong sesuai rasio ukuran. Kalau mati, gambar ditarik penuh.</span>
+                            </span>
+                            <input type="checkbox" id="cropInput" class="peer sr-only" checked>
+                            <span class="switch"></span>
+                        </label>
+                        <div id="cropSettings">
+                            <label for="zoomInput" class="flex justify-between text-sm text-slate-700 mb-1">
+                                Zoom <span id="zoomValue" class="text-slate-500">100%</span>
+                            </label>
+                            <input type="range" id="zoomInput" min="100" max="400" step="5" value="100" class="w-full accent-indigo-600">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="brightnessInput" class="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                            Brightness <span id="brightnessValue" class="font-normal text-slate-500">100%</span>
+                        </label>
+                        <input type="range" id="brightnessInput" min="0" max="200" step="1" value="100" class="w-full accent-indigo-600">
+                    </div>
+
+                    <div>
+                        <label for="contrastInput" class="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                            Contrast <span id="contrastValue" class="font-normal text-slate-500">100%</span>
+                        </label>
+                        <input type="range" id="contrastInput" min="0" max="200" step="1" value="100" class="w-full accent-indigo-600">
+                    </div>
+
+                    <div>
+                        <label for="thresholdInput" class="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                            Threshold <span id="thresholdValue" class="font-normal text-slate-500">128</span>
+                        </label>
+                        <input type="range" id="thresholdInput" min="0" max="255" step="1" value="128" class="w-full accent-indigo-600">
+                    </div>
+
+                    <div class="space-y-3">
+                        <label class="flex items-center justify-between gap-3 cursor-pointer">
+                            <span>
+                                <span class="block text-sm font-medium text-slate-700">Dithering</span>
+                                <span class="block text-xs text-slate-500">Gradasi jadi pola titik, cocok untuk foto</span>
+                            </span>
+                            <input type="checkbox" id="ditherInput" class="peer sr-only">
+                            <span class="switch"></span>
+                        </label>
+                        <label class="flex items-center justify-between gap-3 cursor-pointer">
+                            <span>
+                                <span class="block text-sm font-medium text-slate-700">Invert</span>
+                                <span class="block text-xs text-slate-500">Tukar pixel menyala & mati</span>
+                            </span>
+                            <input type="checkbox" id="invertInput" class="peer sr-only">
+                            <span class="switch"></span>
+                        </label>
+                    </div>
+
+                    <button type="button" id="resetAdjustBtn"
+                            class="w-full sm:w-auto px-4 py-2 rounded-xl text-sm font-medium bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-500 transition-colors">
+                        Reset pengaturan
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 4. FRAMES ================= -->
+        <section data-step="4" class="hidden">
+            <h2 class="font-semibold text-slate-800">4. Frames</h2>
+            <p class="text-sm text-slate-500 mb-5">Ketuk frame untuk memasukkan atau mengeluarkannya</p>
+
+            <div id="framesProgress" class="hidden py-6">
+                <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                    <div id="framesProgressBar" class="bg-indigo-500 h-3 w-0 transition-all duration-150"></div>
+                </div>
+                <p id="framesProgressText" class="text-sm text-slate-500 mt-2 text-center"></p>
+            </div>
+
+            <div id="framesToolbar" class="space-y-3 mb-4">
+                <div class="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center gap-2">
+                    <button type="button" id="selectAllBtn" class="px-3 py-2 rounded-xl text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">Pilih semua</button>
+                    <button type="button" id="selectNoneBtn" class="px-3 py-2 rounded-xl text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">Kosongkan</button>
+                    <select id="dupTolerance" aria-label="Toleransi duplikat"
+                            class="sm:ml-auto border border-slate-300 bg-white rounded-xl px-3 py-2 text-base sm:text-sm
+                                   focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                        <option value="0">Persis sama</option>
+                        <option value="0.01">Hampir sama (≤1%)</option>
+                        <option value="0.03">Mirip (≤3%)</option>
+                    </select>
+                    <button type="button" id="dedupeBtn" class="px-3 py-2 rounded-xl text-sm font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors">Hapus duplikat</button>
+                </div>
+                <p id="framesSummary" class="text-sm text-slate-600"></p>
+                <p id="dedupeNote" class="hidden text-sm text-indigo-700"></p>
+                <p id="dupHint" class="hidden text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl p-3">
+                    Di GIF, durasi frame duplikat digabung ke frame sebelumnya, jadi kecepatannya tetap.
+                    Di perangkat, animasi bisa terlihat lebih cepat kalau firmware memakai delay tetap per frame.
+                </p>
+            </div>
+
+            <div id="framesGrid" class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2"></div>
+        </section>
+
+        <!-- ================= 5. HASIL ================= -->
+        <section data-step="5" class="hidden">
+            <h2 class="font-semibold text-slate-800">5. Hasil</h2>
+            <p class="text-sm text-slate-500 mb-5">Pratinjau di layar dan unduh hasilnya</p>
+
+            <div class="grid lg:grid-cols-2 gap-5 lg:gap-6 items-start">
+                <div>
+                    <div class="rounded-xl bg-slate-950 p-2 sm:p-3 shadow-lg ring-1 ring-slate-800">
+                        <canvas id="resultCanvas" class="pixelated block w-full rounded-sm bg-black"></canvas>
+                    </div>
+                    <p id="resultInfo" class="text-sm text-slate-600 mt-2"></p>
+                    <div id="cppDelayRow" class="hidden">
+                        <div class="flex items-center justify-between gap-3 mt-3">
+                            <label for="cppDelayInput" class="text-sm font-medium text-slate-700">Delay per frame</label>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="cppDelayInput" min="10" max="5000" step="10" value="100" inputmode="numeric"
+                                       class="w-24 border border-slate-300 bg-white rounded-lg px-3 py-2 text-base sm:text-sm
+                                              focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                                <span class="text-sm text-slate-500">ms</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" id="downloadBinBtn" class="col-span-2 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors disabled:opacity-50">
+                            Download BIN
+                        </button>
+                        <button type="button" id="downloadGifBtn" class="py-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium transition-colors disabled:opacity-50">
+                            GIF
+                        </button>
+                        <button type="button" id="downloadZipBtn" class="py-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium transition-colors disabled:opacity-50">
+                            Frames (.zip)
+                        </button>
+                        <button type="button" id="downloadCodeBtn" class="py-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium transition-colors disabled:opacity-50">
+                            Kode (.h)
+                        </button>
+                        <button type="button" id="copyCodeBtn" class="py-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium transition-colors">
+                            Copy kode
+                        </button>
+                    </div>
+
+                    <details class="group border border-slate-200 rounded-2xl">
+                        <summary class="flex items-center justify-between gap-3 cursor-pointer p-4 text-sm font-medium text-slate-700 list-none">
+                            Lihat kode Arduino
+                            <svg viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180"><path fill-rule="evenodd" d="M5.2 7.2a1 1 0 011.4 0L10 10.6l3.4-3.4a1 1 0 111.4 1.4l-4.1 4.1a1 1 0 01-1.4 0L5.2 8.6a1 1 0 010-1.4z" clip-rule="evenodd"/></svg>
+                        </summary>
+                        <div class="px-4 pb-4">
+                            <textarea id="codeOutput" readonly spellcheck="false"
+                                      class="w-full h-64 border border-slate-300 rounded-lg p-3 font-mono text-xs text-slate-700 bg-slate-50 whitespace-pre
+                                             focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition"></textarea>
+                        </div>
+                    </details>
+                </div>
+            </div>
+        </section>
+
+        <!-- NAVIGASI: menempel di bawah layar pada HP, biasa di desktop -->
+        <div id="wizardNav"
+             class="fixed inset-x-0 bottom-0 z-20 flex gap-3 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-white/95 backdrop-blur border-t border-slate-200
+                    lg:static lg:z-auto lg:mt-6 lg:px-0 lg:pb-0 lg:pt-6 lg:bg-transparent lg:backdrop-blur-none">
+            <button type="button" id="backBtn"
+                    class="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium transition-colors">
+                Kembali
+            </button>
+            <button type="button" id="nextBtn"
+                    class="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors
+                           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-indigo-600">
+                Lanjut
+            </button>
+        </div>
+    </main>
+
+    <p class="mt-4 text-center text-slate-400 italic text-xs">
+      develop by ilmi project
+    </p>
+</div>
+
+<script type="module">
+// Library di-load saat dibutuhkan saja, supaya halaman tetap jalan walau CDN lambat
+const loadGifuct = () => import("https://cdn.jsdelivr.net/npm/gifuct-js@2.1.2/+esm");
+const loadGifenc = () => import("https://cdn.jsdelivr.net/npm/gifenc@1.0.3/+esm");
+const loadJSZip = () => import("https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm").then(m => m.default);
+
+const $ = (id) => document.getElementById(id);
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const nextTick = () => new Promise(r => setTimeout(r, 0));
+const frameName = (i) => "frame_" + String(i + 1).padStart(3, "0");
+const baseName = (name) => name.replace(/\.[^.]+$/, "");
+
+function intInput(id, lo, hi, def) {
+    const v = parseInt($(id).value, 10);
+    return Number.isFinite(v) ? clamp(v, lo, hi) : def;
+}
+
+$("logoutBtn").addEventListener("click", () => {
+    if (window.__raLogout) window.__raLogout();
+});
+
+// ===================== KONSTANTA =====================
+const STEPS = [
+    { n: 1, label: "Input" },
+    { n: 2, label: "Durasi" },
+    { n: 3, label: "Adjust" },
+    { n: 4, label: "Frames" },
+    { n: 5, label: "Hasil" }
+];
+
+// Warna pixel menyala per jenis layar. Layar biru-kuning: 16 baris atas kuning, sisanya biru.
+const SCREEN_COLORS = {
+    normal: { top: [255, 255, 255], bottom: [255, 255, 255] },
+    duo:    { top: [255, 214, 10],  bottom: [56, 182, 255] }
+};
+const DUO_SPLIT_ROWS = 16;
+
+// Slider penyesuaian: nilai default + satuan label
+const ADJUSTMENTS = {
+    brightness: { def: 100, unit: "%" },
+    contrast:   { def: 100, unit: "%" },
+    threshold:  { def: 128, unit: "" },
+    zoom:       { def: 100, unit: "%" }
+};
+
+// Pengaturan yang diingat per browser
+const SETTINGS_KEY = "rasi_gif_settings";
+const SAVED_INPUTS = ["widthInput", "heightInput", "fpsInput", "cropInput", "brightnessInput",
+    "contrastInput", "thresholdInput", "ditherInput", "invertInput", "cppDelayInput"];
+
+const MIN_GAP = 0.05; // jarak minimum mulai-selesai (detik)
+
+const CHECK_ICON = `<svg viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5"><path fill-rule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z" clip-rule="evenodd"/></svg>`;
+const PLAY_ICON = `<svg viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 ml-0.5"><path d="M6.3 3.9A1 1 0 004.8 4.8v10.4a1 1 0 001.5.9l8.6-5.2a1 1 0 000-1.8L6.3 3.9z"/></svg>`;
+const PAUSE_ICON = `<svg viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M5.5 4h3v12h-3zM11.5 4h3v12h-3z"/></svg>`;
+
+// ===================== ELEMEN & STATE =====================
+const video = $("video");
+const gifCanvas = $("gifCanvas");
+const gifCtx = gifCanvas.getContext("2d");
+const sourceCanvas = $("sourceCanvas");
+const sourceCtx = sourceCanvas.getContext("2d");
+const oledCanvas = $("oledCanvas");
+const resultCanvas = $("resultCanvas");
+const startRange = $("startRange");
+const endRange = $("endRange");
+const posInput = $("posInput");
+
+// Frame sumber pada posisi pratinjau (ukuran asli)
+const frameCanvas = document.createElement("canvas");
+const frameCtx = frameCanvas.getContext("2d");
+// Kanvas kerja untuk crop + resize
+const workCanvas = document.createElement("canvas");
+const workCtx = workCanvas.getContext("2d", { willReadFrequently: true });
+
+let step = 1;
+let screen = "normal";
+let mediaSource = null;   // video / GIF terakhir yang dipilih
+let source = null;        // sumber aktif: { type: "video"|"gif"|"cpp", name, fileName, width, height, duration?, frames? }
+let sourceId = 0;         // naik setiap ganti sumber
+let codeFileName = "";
+
+let frames = [];          // hasil langkah 4: [{ bits, delay, included, dup }]
+let framesKey = "";       // pengaturan saat frames diproses, untuk cek perlu proses ulang
+let frameSize = { w: 128, h: 64 };
+let processToken = 0;
+let processingFrames = false;
+
+let results = [];         // frame yang dipakai di langkah 5: [{ bits, delay }]
+let resultSize = { w: 128, h: 64 };
+
+// Area crop: zoom 1..4, titik tengah dinormalisasi 0..1 terhadap ukuran sumber
+let cropZoom = 1;
+let cropCx = 0.5;
+let cropCy = 0.5;
+
+// ===================== NAVIGASI LANGKAH =====================
+function isSkipped(n) {
+    return source?.type === "cpp" && n >= 2 && n <= 4;
+}
+
+function renderStepper() {
+    $("stepper").innerHTML = STEPS.map((s, i) => {
+        const skipped = isSkipped(s.n);
+        const done = !skipped && s.n < step;
+        const current = s.n === step;
+
+        const circle = current ? "bg-indigo-600 text-white ring-4 ring-indigo-100"
+            : done ? "bg-indigo-600 text-white"
+            : skipped ? "bg-slate-100 text-slate-300"
+            : "bg-white text-slate-400 border border-slate-300";
+        const label = current ? "text-indigo-700 font-semibold"
+            : done ? "text-slate-600"
+            : skipped ? "text-slate-300"
+            : "text-slate-400";
+        const lineOn = s.n <= step && !skipped && !isSkipped(s.n - 1);
+        const line = i === 0 ? "" :
+            `<li aria-hidden="true" class="flex-1 h-0.5 mt-4 rounded-full ${lineOn ? "bg-indigo-600" : "bg-slate-200"}"></li>`;
+
+        return line + `
+            <li>
+                <button type="button" data-goto="${s.n}" ${done ? "" : "disabled"} ${current ? 'aria-current="step"' : ""}
+                        class="flex flex-col items-center gap-1 w-12 sm:w-20 disabled:cursor-default">
+                    <span class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition ${circle}">
+                        ${done ? CHECK_ICON : s.n}
+                    </span>
+                    <span class="text-[11px] sm:text-xs ${label}">${s.label}</span>
+                </button>
+            </li>`;
+    }).join("");
+}
+
+$("stepper").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-goto]");
+    if (btn && !btn.disabled) goTo(Number(btn.dataset.goto));
+});
+
+function updateNav() {
+    $("backBtn").classList.toggle("hidden", step === 1);
+    $("nextBtn").textContent = step === 5 ? "Mulai lagi" : "Lanjut";
+    $("nextBtn").disabled =
+        (step === 1 && !source) ||
+        (step === 4 && (processingFrames || !frames.some(f => f.included)));
+}
+
+function goTo(n) {
+    if (step === 4 && n !== 4 && processingFrames) {
+        processToken++; // batalkan proses frame yang masih berjalan
+        processingFrames = false;
+    }
+    stopSegment();
+    stopResultPlayback();
+
+    step = n;
+    document.querySelectorAll("section[data-step]").forEach(s => {
+        s.classList.toggle("hidden", Number(s.dataset.step) !== n);
+    });
+    renderStepper();
+    updateNav();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    if (n === 2) enterDuration();
+    else if (n === 3) enterAdjust();
+    else if (n === 4) enterFrames();
+    else if (n === 5) enterResults();
+}
+
+$("nextBtn").addEventListener("click", () => {
+    if ($("nextBtn").disabled) return;
+    if (step === 1) goTo(source.type === "cpp" ? 5 : 2);
+    else if (step === 5) goTo(1);
+    else goTo(step + 1);
+});
+
+$("backBtn").addEventListener("click", () => {
+    goTo(step === 5 && source?.type === "cpp" ? 1 : step - 1);
+});
+
+// ===================== 1. INPUT =====================
+const dropZone = $("dropZone");
+const fileInput = $("fileInput");
+const DROP_TEXT = $("dropText").innerHTML;
+
+dropZone.addEventListener("click", () => fileInput.click());
+dropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropZone.classList.add("bg-indigo-50");
+});
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("bg-indigo-50"));
+dropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropZone.classList.remove("bg-indigo-50");
+    handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener("change", () => {
+    handleFile(fileInput.files[0]);
+    fileInput.value = ""; // supaya file yang sama bisa dipilih lagi
+});
+
+const isGifFile = (f) => f.type === "image/gif" || /\.gif$/i.test(f.name);
+const isCodeFile = (f) => /\.(cpp|c|h|hpp|ino|txt)$/i.test(f.name) || f.type.startsWith("text/");
+const isVideoFile = (f) => f.type.startsWith("video/") || /\.(mp4|m4v|mov|webm)$/i.test(f.name);
+
+function showInputError(msg) {
+    $("inputError").textContent = msg;
+    $("inputError").classList.toggle("hidden", !msg);
+}
+
+async function handleFile(file) {
+    if (!file) return;
+    showInputError("");
+
+    if (isCodeFile(file)) {
+        codeFileName = file.name;
+        $("codeInput").value = await file.text();
+        $("codeDetails").open = true;
+        handleCode();
+        return;
+    }
+
+    if (!isGifFile(file) && !isVideoFile(file)) {
+        showInputError("Format tidak didukung. Gunakan MP4, GIF, atau kode Arduino.");
+        return;
+    }
+
+    $("dropText").textContent = `Memuat ${file.name}...`;
+    try {
+        const media = isGifFile(file) ? await loadGif(file) : await loadVideo(file);
+        media.name = baseName(file.name);
+        media.fileName = file.name;
+        mediaSource = media;
+        codeFileName = "";
+        $("codeInput").value = "";
+        setSource(media);
+    } catch (err) {
+        console.error(err);
+        showInputError(`Gagal memuat ${file.name}: ${err.message || err}`);
+    } finally {
+        $("dropText").innerHTML = DROP_TEXT;
+    }
+}
+
+let codeTimer = null;
+$("codeInput").addEventListener("input", () => {
+    clearTimeout(codeTimer);
+    codeTimer = setTimeout(handleCode, 300);
+});
+
+// Teks kode kosong -> kembali ke video/GIF terakhir (kalau ada)
+function handleCode() {
+    const text = $("codeInput").value.trim();
+    showInputError("");
+
+    if (!text) {
+        codeFileName = "";
+        setSource(mediaSource);
+        return;
+    }
+
+    try {
+        const parsed = parseCode(text);
+        setSource({
+            type: "cpp",
+            name: codeFileName ? baseName(codeFileName) : "animasi",
+            fileName: codeFileName || "Kode ditempel",
+            ...parsed
+        });
+    } catch (err) {
+        setSource(null);
+        showInputError(err.message);
+    }
+}
+
+function setSource(src) {
+    source = src;
+    sourceId++;
+    processToken++;
+    processingFrames = false;
+    frames = [];
+    framesKey = "";
+
+    $("sourceCard").classList.toggle("hidden", !src);
+    if (src) {
+        $("sourceBadge").textContent = { video: "VIDEO", gif: "GIF", cpp: "KODE" }[src.type];
+        $("sourceName").textContent = src.fileName;
+        $("sourceMeta").textContent = src.type === "cpp"
+            ? `${src.frames.length} frame · ${src.width}×${src.height} px · langsung ke Hasil`
+            : `${src.width}×${src.height} · ${src.duration.toFixed(2)} s` +
+              (src.type === "gif" ? ` · ${src.frames.length} frame` : "");
+        if (src.type !== "cpp") prepareMedia();
+    }
+
+    renderStepper();
+    updateNav();
+}
+
+function prepareMedia() {
+    const { type, width, height, duration } = source;
+
+    video.classList.toggle("hidden", type !== "video");
+    gifCanvas.classList.toggle("hidden", type !== "gif");
+    $("fpsRow").classList.toggle("hidden", type !== "video");
+
+    frameCanvas.width = sourceCanvas.width = gifCanvas.width = width;
+    frameCanvas.height = sourceCanvas.height = gifCanvas.height = height;
+
+    const max = duration.toFixed(2);
+    startRange.max = endRange.max = max;
+    startRange.value = 0;
+    endRange.value = max;
+    syncRange();
+
+    cropZoom = 1;
+    cropCx = cropCy = 0.5;
+    setAdjust("zoom", ADJUSTMENTS.zoom.def);
+}
+
+function loadVideo(file) {
+    return new Promise((resolve, reject) => {
+        if (video.src) URL.revokeObjectURL(video.src);
+        const cleanup = () => { video.onloadedmetadata = video.onerror = null; };
+
+        video.onloadedmetadata = async () => {
+            cleanup();
+            if (!video.videoWidth || !Number.isFinite(video.duration)) {
+                reject(new Error("video tidak bisa dibaca"));
+                return;
+            }
+            // iOS baru men-decode frame setelah video pernah diputar; video muted boleh diputar tanpa interaksi
+            try {
+                await video.play();
+                video.pause();
+            } catch {}
+            resolve({ type: "video", width: video.videoWidth, height: video.videoHeight, duration: video.duration });
+        };
+        video.onerror = () => {
+            cleanup();
+            reject(new Error("format video tidak didukung browser"));
+        };
+        video.src = URL.createObjectURL(file);
+        video.load();
+    });
+}
+
+// Decode GIF lalu susun ulang tiap frame utuh (GIF menyimpan frame sebagai potongan + aturan disposal)
+async function loadGif(file) {
+    const { parseGIF, decompressFrames } = await loadGifuct();
+    const gif = parseGIF(await file.arrayBuffer());
+    const raw = decompressFrames(gif, true);
+    if (!raw.length) throw new Error("GIF tidak berisi frame");
+
+    const width = gif.lsd.width;
+    const height = gif.lsd.height;
+
+    const full = document.createElement("canvas");
+    full.width = width;
+    full.height = height;
+    const fullCtx = full.getContext("2d", { willReadFrequently: true });
+    const patch = document.createElement("canvas");
+    const patchCtx = patch.getContext("2d");
+
+    const gifFrames = [];
+    let t = 0;
+
+    for (const f of raw) {
+        const { left, top, width: pw, height: ph } = f.dims;
+        const delay = f.delay || 100;
+        const previous = f.disposalType === 3 ? fullCtx.getImageData(0, 0, width, height) : null;
+
+        patch.width = pw;
+        patch.height = ph;
+        patchCtx.putImageData(new ImageData(f.patch, pw, ph), 0, 0);
+        fullCtx.drawImage(patch, left, top);
+
+        const snap = document.createElement("canvas");
+        snap.width = width;
+        snap.height = height;
+        snap.getContext("2d").drawImage(full, 0, 0);
+        gifFrames.push({ canvas: snap, start: t, delay });
+        t += delay;
+
+        // 2 = kembalikan ke background, 3 = kembalikan ke frame sebelumnya
+        if (f.disposalType === 2) fullCtx.clearRect(left, top, pw, ph);
+        else if (previous) fullCtx.putImageData(previous, 0, 0);
+    }
+
+    return { type: "gif", width, height, duration: t / 1000, frames: gifFrames };
+}
+
+function hexBytes(text) {
+    return Array.from(text.matchAll(/0x([0-9a-f]{1,2})/gi), m => parseInt(m[1], 16));
+}
+
+// Format image2cpp: komentar "// 'nama', WxHpx" lalu array byte (horizontal, 1 bit per pixel)
+function parseCode(text) {
+    const marks = [...text.matchAll(/\/\/\s*'[^']*'\s*,?\s*(\d+)\s*x\s*(\d+)\s*px/gi)];
+    let raw = [];
+
+    if (marks.length) {
+        marks.forEach((m, i) => {
+            const end = i + 1 < marks.length ? marks[i + 1].index : text.length;
+            const chunk = text.slice(m.index + m[0].length, end);
+            const body = chunk.match(/\{([^}]*)\}/); // isi kurung pertama saja, array "allArray" di akhir tidak ikut
+            raw.push({ w: Number(m[1]), h: Number(m[2]), bytes: hexBytes(body ? body[1] : chunk) });
+        });
+    } else {
+        // Tanpa komentar ukuran: tiap blok { ... } berisi hex dianggap satu frame selebar 128 px
+        for (const m of text.matchAll(/\{([^}]*)\}/g)) {
+            const bytes = hexBytes(m[1]);
+            if (bytes.length) raw.push({ w: 128, h: Math.ceil(bytes.length / 16), bytes });
+        }
+    }
+
+    raw = raw.filter(f => f.bytes.length);
+    if (!raw.length) throw new Error("Tidak ditemukan frame. Pastikan formatnya image2cpp, misalnya: // 'frame_001', 128x64px");
+
+    const { w, h } = raw[0];
+    if (!w || !h || w > 1024 || h > 1024) throw new Error(`Ukuran frame tidak valid: ${w}x${h}`);
+    if (raw.some(f => f.w !== w || f.h !== h)) throw new Error("Ukuran semua frame harus sama.");
+
+    return { width: w, height: h, frames: raw.map(f => unpackBits(f.bytes, w, h)) };
+}
+
+function unpackBits(bytes, w, h) {
+    const bytesPerRow = Math.ceil(w / 8);
+    const bits = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            const b = bytes[y * bytesPerRow + (x >> 3)] || 0; // byte yang kurang dianggap 0
+            bits[y * w + x] = (b >> (7 - (x & 7))) & 1;
+        }
+    }
+    return bits;
+}
+
+document.querySelectorAll('input[name="screen"]').forEach(radio => {
+    radio.addEventListener("change", () => {
+        screen = radio.value;
+        saveSettings();
+    });
+});
+
+// ===================== 2. DURASI =====================
+function getRange() {
+    const s = Number(startRange.value);
+    const e = Number(endRange.value);
+    return [s, Math.max(e, s + 0.01)];
+}
+
+const rangeFraction = (t) => (source?.duration ? t / source.duration : 0);
+// Posisi di track mengikuti titik tengah thumb (lebar thumb 26px)
+const trackPos = (p) => `calc(13px + (100% - 26px) * ${p})`;
+
+function syncRange() {
+    const [s, e] = getRange();
+    $("startInput").value = s.toFixed(2);
+    $("endInput").value = e.toFixed(2);
+    $("rangeLabel").textContent = `${s.toFixed(2)} – ${e.toFixed(2)} s (${(e - s).toFixed(2)} s)`;
+
+    $("rangeFill").style.left = trackPos(rangeFraction(s));
+    $("rangeFill").style.right = `calc(13px + (100% - 26px) * ${1 - rangeFraction(e)})`;
+
+    // Thumb mulai dinaikkan kalau mepet ujung kanan, supaya masih bisa digeser
+    startRange.style.zIndex = rangeFraction(s) > 0.9 ? 3 : 1;
+    endRange.style.zIndex = 2;
+
+    updateDurationEstimate();
+}
+
+startRange.addEventListener("input", () => {
+    stopSegment();
+    const e = Number(endRange.value);
+    if (Number(startRange.value) > e - MIN_GAP) startRange.value = Math.max(0, e - MIN_GAP);
+    syncRange();
+    showSourceAt(Number(startRange.value));
+});
+
+endRange.addEventListener("input", () => {
+    stopSegment();
+    const s = Number(startRange.value);
+    if (Number(endRange.value) < s + MIN_GAP) endRange.value = Math.min(source.duration, s + MIN_GAP);
+    syncRange();
+    showSourceAt(Math.max(0, Number(endRange.value) - 0.01));
+});
+
+["startInput", "endInput"].forEach(id => $(id).addEventListener("change", () => {
+    stopSegment();
+    const dur = source.duration;
+    let s = clamp(Number($("startInput").value) || 0, 0, dur);
+    let e = clamp(Number($("endInput").value) || dur, 0, dur);
+    if (e - s < MIN_GAP) {
+        if (id === "startInput") s = Math.max(0, e - MIN_GAP);
+        else e = Math.min(dur, s + MIN_GAP);
+    }
+    startRange.value = s;
+    endRange.value = e;
+    syncRange();
+    showSourceAt(id === "startInput" ? s : Math.max(0, e - 0.01));
+}));
+
+$("fpsInput").addEventListener("input", () => {
+    updateDurationEstimate();
+    saveSettings();
+});
+
+function gifFrameAt(t) {
+    const ms = t * 1000;
+    let found = source.frames[0];
+    for (const f of source.frames) {
+        if (f.start <= ms) found = f;
+        else break;
+    }
+    return found;
+}
+
+function gifFramesInRange(s, e) {
+    const sMs = s * 1000;
+    const eMs = e * 1000;
+    const list = source.frames.filter(f => f.start + f.delay > sMs && f.start < eMs);
+    return list.length ? list : [gifFrameAt(s)];
+}
+
+// Daftar frame yang akan diproses sesuai rentang & FPS
+function frameList() {
+    const [s, e] = getRange();
+
+    if (source.type === "video") {
+        const fps = intInput("fpsInput", 1, 60, 10);
+        const n = Math.max(1, Math.ceil((e - s) * fps - 1e-6));
+        return Array.from({ length: n }, (_, i) => ({ t: s + i / fps, delay: Math.round(1000 / fps) }));
+    }
+
+    return gifFramesInRange(s, e).map(f => ({ frame: f, delay: f.delay }));
+}
+
+function updateDurationEstimate() {
+    if (!source || source.type === "cpp") return;
+    const n = frameList().length;
+    const { w, h } = targetSize();
+    $("durationEstimate").textContent =
+        `±${n} frame · ±${(n * Math.ceil(w / 8) * h).toLocaleString("id-ID")} byte (${w}×${h})`;
+}
+
+function drawGifFrame(f) {
+    gifCtx.clearRect(0, 0, gifCanvas.width, gifCanvas.height);
+    gifCtx.drawImage(f.canvas, 0, 0);
+}
+
+function showSourceAt(t) {
+    $("timeLabel").textContent = t.toFixed(2) + " s";
+    if (source.type === "video") video.currentTime = t;
+    else drawGifFrame(gifFrameAt(t));
+}
+
+function enterDuration() {
+    syncRange();
+    showSourceAt(getRange()[0]);
+}
+
+// Putar ulang bagian yang dipilih (loop)
+let segPlaying = false;
+let segTimer = null;
+let segRaf = null;
+
+function setPlayIcon(playing) {
+    $("playBtn").innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
+    $("playBtn").setAttribute("aria-label", playing ? "Jeda" : "Putar");
+}
+
+function updatePlayhead(t) {
+    $("playhead").classList.toggle("hidden", t === null);
+    if (t === null) return;
+    $("playhead").style.left = trackPos(rangeFraction(t));
+    $("timeLabel").textContent = t.toFixed(2) + " s";
+}
+
+function startSegment() {
+    const [s, e] = getRange();
+    segPlaying = true;
+    setPlayIcon(true);
+
+    if (source.type === "video") {
+        video.currentTime = s;
+        video.play().catch(() => {});
+        const loop = () => {
+            if (!segPlaying) return;
+            if (video.currentTime >= e || video.ended) {
+                video.currentTime = s;
+                if (video.paused) video.play().catch(() => {});
+            }
+            updatePlayhead(video.currentTime);
+            segRaf = requestAnimationFrame(loop);
+        };
+        loop();
+    } else {
+        const list = gifFramesInRange(s, e);
+        let i = 0;
+        const tick = () => {
+            if (!segPlaying) return;
+            const f = list[i];
+            drawGifFrame(f);
+            updatePlayhead(f.start / 1000);
+            i = (i + 1) % list.length;
+            segTimer = setTimeout(tick, f.delay);
+        };
+        tick();
+    }
+}
+
+function stopSegment() {
+    if (!segPlaying) return;
+    segPlaying = false;
+    cancelAnimationFrame(segRaf);
+    clearTimeout(segTimer);
+    video.pause();
+    setPlayIcon(false);
+    updatePlayhead(null);
+}
+
+$("playBtn").addEventListener("click", () => (segPlaying ? stopSegment() : startSegment()));
+
+// ===================== 3. ADJUST =====================
+function targetSize() {
+    return { w: intInput("widthInput", 1, 1024, 128), h: intInput("heightInput", 1, 1024, 64) };
+}
+
+// Kotak crop terbesar dengan rasio target, diperkecil sesuai zoom
+function cropRect() {
+    const W = source.width;
+    const H = source.height;
+    const { w, h } = targetSize();
+    const aspect = w / h;
+
+    let bw = W;
+    let bh = W / aspect;
+    if (bh > H) {
+        bh = H;
+        bw = H * aspect;
+    }
+
+    const sw = bw / cropZoom;
+    const sh = bh / cropZoom;
+    const sx = clamp(cropCx * W - sw / 2, 0, W - sw);
+    const sy = clamp(cropCy * H - sh / 2, 0, H - sh);
+    return { sx, sy, sw, sh };
+}
+
+function sourceRect() {
+    return $("cropInput").checked ? cropRect() : { sx: 0, sy: 0, sw: source.width, sh: source.height };
+}
+
+// Titik tengah ikut dikunci supaya tidak "nyangkut" di luar batas saat digeser balik
+function clampCrop() {
+    const r = cropRect();
+    cropCx = (r.sx + r.sw / 2) / source.width;
+    cropCy = (r.sy + r.sh / 2) / source.height;
+}
+
+function adjustSettings() {
+    return {
+        brightness: Number($("brightnessInput").value) / 100,
+        contrast: Number($("contrastInput").value) / 100,
+        threshold: Number($("thresholdInput").value),
+        dither: $("ditherInput").checked,
+        invert: $("invertInput").checked
+    };
+}
+
+// Grayscale -> brightness -> contrast -> threshold, opsional dithering Floyd–Steinberg. 1 = pixel menyala.
+// Dihitung manual (bukan ctx.filter) supaya sama di semua browser, termasuk Safari iOS lama.
+function toBits(data, w, h, { brightness, contrast, threshold, dither, invert }) {
+    const gray = new Float32Array(w * h);
+    for (let i = 0; i < gray.length; i++) {
+        const lum = 0.299 * data[i * 4] + 0.587 * data[i * 4 + 1] + 0.114 * data[i * 4 + 2];
+        gray[i] = (lum * brightness - 128) * contrast + 128;
+    }
+
+    const bits = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            const i = y * w + x;
+            const g = clamp(gray[i], 0, 255);
+            const on = g >= threshold;
+            bits[i] = on !== invert ? 1 : 0;
+
+            if (dither) {
+                const err = g - (on ? 255 : 0);
+                if (x + 1 < w) gray[i + 1] += err * 7 / 16;
+                if (y + 1 < h) {
+                    if (x > 0) gray[i + w - 1] += err * 3 / 16;
+                    gray[i + w] += err * 5 / 16;
+                    if (x + 1 < w) gray[i + w + 1] += err * 1 / 16;
+                }
+            }
+        }
+    }
+    return bits;
+}
+
+// Crop + resize + hitam-putih untuk satu frame. src = video atau canvas berukuran sumber.
+function processFrame(src) {
+    const r = sourceRect();
+    const { w, h } = targetSize();
+    if (workCanvas.width !== w || workCanvas.height !== h) {
+        workCanvas.width = w;
+        workCanvas.height = h;
+    }
+    workCtx.fillStyle = "#000";
+    workCtx.fillRect(0, 0, w, h);
+    workCtx.imageSmoothingQuality = "high";
+    workCtx.drawImage(src, r.sx, r.sy, r.sw, r.sh, 0, 0, w, h);
+    return toBits(workCtx.getImageData(0, 0, w, h).data, w, h, adjustSettings());
+}
+
+// Gambar bit ke canvas dengan warna layar (colored) atau hitam-putih biasa
+function drawBits(canvas, bits, w, h, colored) {
+    if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+    }
+    const ctx = canvas.getContext("2d");
+    const img = ctx.createImageData(w, h);
+    const scheme = SCREEN_COLORS[colored ? screen : "normal"];
+
+    for (let y = 0; y < h; y++) {
+        const c = y < DUO_SPLIT_ROWS ? scheme.top : scheme.bottom;
+        for (let x = 0; x < w; x++) {
+            const i = y * w + x;
+            const p = i * 4;
+            if (bits[i]) {
+                img.data[p] = c[0];
+                img.data[p + 1] = c[1];
+                img.data[p + 2] = c[2];
+            }
+            img.data[p + 3] = 255;
+        }
+    }
+    ctx.putImageData(img, 0, 0);
+}
+
+function seekVideo(t) {
+    return new Promise((resolve) => {
+        const timer = setTimeout(done, 5000); // jaga-jaga kalau event "seeked" tidak datang
+        function done() {
+            clearTimeout(timer);
+            video.removeEventListener("seeked", done);
+            resolve();
+        }
+        video.addEventListener("seeked", done);
+        video.currentTime = t;
+    });
+}
+
+let previewSeq = 0;
+
+async function updateAdjustPreview() {
+    if (!source || step !== 3) return;
+
+    const seq = ++previewSeq;
+    const t = Number(posInput.value);
+    $("posValue").textContent = t.toFixed(2) + " s";
+
+    let src;
+    if (source.type === "video") {
+        await seekVideo(t);
+        if (seq !== previewSeq) return; // sudah ada posisi yang lebih baru
+        src = video;
+    } else {
+        src = gifFrameAt(t).canvas;
+    }
+
+    frameCtx.clearRect(0, 0, frameCanvas.width, frameCanvas.height);
+    frameCtx.drawImage(src, 0, 0, frameCanvas.width, frameCanvas.height);
+    renderAdjustPreview();
+}
+
+function renderAdjustPreview() {
+    if (!source || source.type === "cpp") return;
+
+    sourceCtx.drawImage(frameCanvas, 0, 0);
+
+    if ($("cropInput").checked) {
+        const W = source.width;
+        const H = source.height;
+        const r = cropRect();
+
+        // Gelapkan area di luar kotak crop
+        sourceCtx.fillStyle = "rgba(0, 0, 0, 0.6)";
+        sourceCtx.fillRect(0, 0, W, r.sy);
+        sourceCtx.fillRect(0, r.sy + r.sh, W, H - r.sy - r.sh);
+        sourceCtx.fillRect(0, r.sy, r.sx, r.sh);
+        sourceCtx.fillRect(r.sx + r.sw, r.sy, W - r.sx - r.sw, r.sh);
+
+        sourceCtx.strokeStyle = "#818cf8";
+        sourceCtx.lineWidth = Math.max(2, W / 150);
+        sourceCtx.strokeRect(r.sx, r.sy, r.sw, r.sh);
+    }
+
+    const { w, h } = targetSize();
+    drawBits(oledCanvas, processFrame(frameCanvas), w, h, true);
+    $("adjustSizeLabel").textContent = `${w} × ${h} px`;
+}
+
+function enterAdjust() {
+    const [s, e] = getRange();
+    const max = Math.max(s, e - 0.01);
+    posInput.min = s.toFixed(2);
+    posInput.max = max.toFixed(2);
+    posInput.value = clamp(Number(posInput.value), s, max);
+    $("cropBox").classList.toggle("hidden", !$("cropInput").checked);
+    $("cropSettings").classList.toggle("hidden", !$("cropInput").checked);
+    clampCrop();
+    updateAdjustPreview();
+}
+
+function onAdjustChange() {
+    saveSettings();
+    if (!source || source.type === "cpp") return;
+    $("cropBox").classList.toggle("hidden", !$("cropInput").checked);
+    $("cropSettings").classList.toggle("hidden", !$("cropInput").checked);
+    clampCrop();
+    if (step === 3) renderAdjustPreview();
+    updateDurationEstimate();
+}
+
+posInput.addEventListener("input", updateAdjustPreview);
+
+function updateAdjustLabel(key) {
+    $(key + "Value").textContent = $(key + "Input").value + ADJUSTMENTS[key].unit;
+}
+
+function setAdjust(key, value) {
+    $(key + "Input").value = value;
+    updateAdjustLabel(key);
+}
+
+Object.keys(ADJUSTMENTS).forEach(key => {
+    $(key + "Input").addEventListener("input", () => {
+        updateAdjustLabel(key);
+        if (key === "zoom") cropZoom = Number($("zoomInput").value) / 100;
+        onAdjustChange();
+    });
+});
+
+["widthInput", "heightInput"].forEach(id => $(id).addEventListener("input", onAdjustChange));
+["cropInput", "ditherInput", "invertInput"].forEach(id => $(id).addEventListener("change", onAdjustChange));
+
+document.querySelectorAll("[data-size]").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const [w, h] = btn.dataset.size.split("x");
+        $("widthInput").value = w;
+        $("heightInput").value = h;
+        onAdjustChange();
+    });
+});
+
+$("resetAdjustBtn").addEventListener("click", () => {
+    Object.entries(ADJUSTMENTS).forEach(([key, cfg]) => setAdjust(key, cfg.def));
+    $("ditherInput").checked = false;
+    $("invertInput").checked = false;
+    cropZoom = 1;
+    cropCx = cropCy = 0.5;
+    onAdjustChange();
+});
+
+// Geser kotak crop
+let drag = null;
+
+function getClientPos(e) {
+    if (e.touches && e.touches.length > 0) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+    return { x: e.clientX, y: e.clientY };
+}
+
+function startDrag(e) {
+    if (!source || step !== 3 || !$("cropInput").checked) return;
+    const pos = getClientPos(e);
+    drag = { x: pos.x, y: pos.y, cx: cropCx, cy: cropCy };
+}
+
+function onDrag(e) {
+    if (!drag) return;
+    e.preventDefault(); // Mencegah scrolling halaman saat digeser di HP
+
+    const pos = getClientPos(e);
+    const rect = sourceCanvas.getBoundingClientRect();
+    cropCx = drag.cx + (pos.x - drag.x) / rect.width;
+    cropCy = drag.cy + (pos.y - drag.y) / rect.height;
+    clampCrop();
+    renderAdjustPreview();
+}
+
+function endDrag() {
+    drag = null;
+}
+
+sourceCanvas.addEventListener("mousedown", startDrag);
+window.addEventListener("mousemove", onDrag);
+window.addEventListener("mouseup", endDrag);
+sourceCanvas.addEventListener("touchstart", startDrag, { passive: false });
+window.addEventListener("touchmove", onDrag, { passive: false });
+window.addEventListener("touchend", endDrag);
+
+// ===================== 4. FRAMES =====================
+function settingsKey() {
+    const [s, e] = getRange();
+    return JSON.stringify([sourceId, s, e, $("fpsInput").value, targetSize(), $("cropInput").checked,
+        cropZoom, cropCx, cropCy, adjustSettings()]);
+}
+
+async function enterFrames() {
+    const key = settingsKey();
+    if (key === framesKey && frames.length) {
+        renderFramesGrid();
+        updateFramesSummary();
+        return;
+    }
+    await processAllFrames(key);
+}
+
+function setFramesProgress(fraction, text) {
+    $("framesProgressBar").style.width = `${Math.round(fraction * 100)}%`;
+    $("framesProgressText").textContent = text;
+}
+
+async function processAllFrames(key) {
+    const token = ++processToken;
+    processingFrames = true;
+    frames = [];
+    framesKey = "";
+    $("framesGrid").innerHTML = "";
+    $("dedupeNote").classList.add("hidden");
+    $("framesToolbar").classList.add("hidden");
+    $("framesProgress").classList.remove("hidden");
+    setFramesProgress(0, "Memproses frame...");
+    updateNav();
+
+    const list = frameList();
+    const out = [];
+
+    try {
+        for (let i = 0; i < list.length; i++) {
+            const item = list[i];
+            let src;
+            if (source.type === "video") {
+                await seekVideo(item.t);
+                src = video;
+            } else {
+                src = item.frame.canvas;
+                if (i % 10 === 0) await nextTick(); // beri kesempatan UI update
+            }
+            if (token !== processToken) return; // dibatalkan: pindah langkah atau ganti sumber
+
+            out.push({ bits: processFrame(src), delay: item.delay, included: true, dup: false });
+            setFramesProgress((i + 1) / list.length, `Memproses frame ${i + 1} dari ${list.length}`);
+        }
+    } catch (err) {
+        console.error(err);
+        if (token !== processToken) return;
+        processingFrames = false;
+        setFramesProgress(0, "Gagal memproses: " + (err.message || err));
+        updateNav();
+        return;
+    }
+
+    frames = out;
+    frameSize = targetSize();
+    framesKey = key;
+    processingFrames = false;
+    $("framesProgress").classList.add("hidden");
+    $("framesToolbar").classList.remove("hidden");
+    renderFramesGrid();
+    updateFramesSummary();
+    updateNav();
+}
+
+function renderFramesGrid() {
+    const grid = $("framesGrid");
+    grid.innerHTML = "";
+    const fragment = document.createDocumentFragment();
+
+    frames.forEach((f, i) => {
+        const cell = document.createElement("button");
+        cell.type = "button";
+        cell.dataset.index = i;
+        cell.className = "relative rounded-lg p-1 bg-slate-900 ring-2 transition";
+        cell.innerHTML = `
+            <canvas class="pixelated block w-full rounded-sm"></canvas>
+            <span data-role="check" class="absolute top-1.5 left-1.5 w-5 h-5 rounded-full flex items-center justify-center shadow">${CHECK_ICON}</span>
+            <span class="absolute bottom-1.5 right-1.5 px-1 rounded bg-black/70 text-[10px] leading-4 text-white font-mono">${String(i + 1).padStart(3, "0")}</span>
+            <span data-role="dup" class="hidden absolute top-1.5 right-1.5 px-1 rounded bg-amber-400 text-[10px] leading-4 font-semibold text-amber-950">duplikat</span>`;
+        drawBits(cell.querySelector("canvas"), f.bits, frameSize.w, frameSize.h, true);
+        updateCell(cell, f);
+        fragment.appendChild(cell);
+    });
+
+    grid.appendChild(fragment);
+}
+
+function updateCell(cell, f) {
+    cell.classList.toggle("ring-indigo-500", f.included);
+    cell.classList.toggle("ring-transparent", !f.included);
+    cell.classList.toggle("opacity-40", !f.included);
+    cell.setAttribute("aria-pressed", String(f.included));
+
+    const check = cell.querySelector('[data-role="check"]');
+    check.classList.toggle("bg-indigo-600", f.included);
+    check.classList.toggle("text-white", f.included);
+    check.classList.toggle("bg-white/80", !f.included);
+    check.classList.toggle("text-transparent", !f.included);
+
+    cell.querySelector('[data-role="dup"]').classList.toggle("hidden", !f.dup);
+}
+
+function refreshCells() {
+    $("framesGrid").querySelectorAll("[data-index]").forEach(cell => {
+        updateCell(cell, frames[Number(cell.dataset.index)]);
+    });
+    updateFramesSummary();
+    updateNav();
+}
+
+function updateFramesSummary() {
+    const picked = frames.filter(f => f.included).length;
+    const { w, h } = frameSize;
+    $("framesSummary").innerHTML =
+        `<b class="text-slate-800">${picked}</b> dari ${frames.length} frame dipilih · ` +
+        `${(picked * Math.ceil(w / 8) * h).toLocaleString("id-ID")} byte`;
+    $("dupHint").classList.toggle("hidden", !frames.some(f => f.dup && !f.included));
+}
+
+$("framesGrid").addEventListener("click", (e) => {
+    const cell = e.target.closest("[data-index]");
+    if (!cell) return;
+    const f = frames[Number(cell.dataset.index)];
+    f.included = !f.included;
+    updateCell(cell, f);
+    updateFramesSummary();
+    updateNav();
+});
+
+$("selectAllBtn").addEventListener("click", () => {
+    frames.forEach(f => { f.included = true; f.dup = false; });
+    $("dedupeNote").classList.add("hidden");
+    refreshCells();
+});
+
+$("selectNoneBtn").addEventListener("click", () => {
+    frames.forEach(f => { f.included = false; });
+    refreshCells();
+});
+
+function diffCount(a, b, limit) {
+    let n = 0;
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i] && ++n > limit) break;
+    }
+    return n;
+}
+
+// Bandingkan tiap frame dengan frame terakhir yang dipertahankan, supaya perubahan pelan
+// (misalnya noise video) tetap terdeteksi sebagai duplikat
+$("dedupeBtn").addEventListener("click", () => {
+    const tolerance = Number($("dupTolerance").value);
+    const maxDiff = Math.floor(tolerance * frameSize.w * frameSize.h);
+    let last = null;
+    let removed = 0;
+
+    for (const f of frames) {
+        if (!f.included) continue;
+        if (last && diffCount(last.bits, f.bits, maxDiff) <= maxDiff) {
+            f.included = false;
+            f.dup = true;
+            removed++;
+        } else {
+            last = f;
+        }
+    }
+
+    $("dedupeNote").textContent = removed
+        ? `${removed} frame duplikat dikeluarkan. Ketuk frame untuk memasukkannya lagi.`
+        : "Tidak ada frame duplikat.";
+    $("dedupeNote").classList.remove("hidden");
+    refreshCells();
+});
+
+// ===================== 5. HASIL =====================
+// Durasi frame duplikat yang dikeluarkan digabung ke frame sebelumnya, supaya kecepatan GIF tetap
+function outputFrames() {
+    if (source.type === "cpp") {
+        const delay = intInput("cppDelayInput", 10, 5000, 100);
+        return source.frames.map(bits => ({ bits, delay }));
+    }
+
+    const out = [];
+    for (const f of frames) {
+        if (f.included) out.push({ bits: f.bits, delay: f.delay });
+        else if (f.dup && out.length) out[out.length - 1].delay += f.delay;
+    }
+    return out;
+}
+
+function enterResults() {
+    const cpp = source.type === "cpp";
+    $("cppDelayRow").classList.toggle("hidden", !cpp);
+    resultSize = cpp ? { w: source.width, h: source.height } : frameSize;
+    results = outputFrames();
+    $("codeOutput").value = generateCode();
+    updateResultInfo();
+    playResults();
+}
+
+function updateResultInfo() {
+    const { w, h } = resultSize;
+    const totalMs = results.reduce((s, f) => s + f.delay, 0);
+    const bytes = results.length * Math.ceil(w / 8) * h;
+    $("resultInfo").textContent =
+        `${results.length} frame · ${w}×${h} px · ${(totalMs / 1000).toFixed(2)} s · ${bytes.toLocaleString("id-ID")} byte`;
+}
+
+$("cppDelayInput").addEventListener("input", () => {
+    saveSettings();
+    if (step !== 5 || source?.type !== "cpp") return;
+    results = outputFrames();
+    updateResultInfo();
+    playResults();
+});
+
+let playTimer = null;
+
+function playResults() {
+    clearTimeout(playTimer);
+    let i = 0;
+    const tick = () => {
+        const f = results[i];
+        if (!f) return;
+        drawBits(resultCanvas, f.bits, resultSize.w, resultSize.h, true);
+        i = (i + 1) % results.length;
+        playTimer = setTimeout(tick, Math.max(20, f.delay));
+    };
+    tick();
+}
+
+function stopResultPlayback() {
+    clearTimeout(playTimer);
+}
+
+// Horizontal, 1 bit per pixel, MSB = pixel paling kiri (sama dengan image2cpp / drawBitmap)
+function packBits(bits, w, h) {
+    const bytesPerRow = Math.ceil(w / 8);
+    const out = new Uint8Array(bytesPerRow * h);
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            if (bits[y * w + x]) out[y * bytesPerRow + (x >> 3)] |= 0x80 >> (x & 7);
+        }
+    }
+    return out;
+}
+
+// Format image2cpp: komentar "// 'frame...', WxHpx" di tiap frame juga dipakai parseCode() saat kode ditempel lagi di langkah 1
+function generateCode() {
+    const { w, h } = resultSize;
+    const names = results.map((_, i) => "epd_bitmap_" + frameName(i));
+    let total = 0;
+
+    const blocks = results.map((f, i) => {
+        const packed = packBits(f.bits, w, h);
+        total += packed.length;
+        const lines = [];
+        for (let j = 0; j < packed.length; j += 16) {
+            const row = Array.from(packed.subarray(j, j + 16),
+                b => "0x" + b.toString(16).toUpperCase().padStart(2, "0"));
+            lines.push("    " + row.join(", ") + ",");
+        }
+        return `// '${frameName(i)}', ${w}x${h}px\n` +
+               `const unsigned char ${names[i]} [] PROGMEM = {\n` +
+               lines.join("\n") + "\n" +
+               `};`;
+    });
+
+    blocks.push(
+        `// Array of all bitmaps for convenience. (Total bytes used to store images in PROGMEM = ${total})\n` +
+        `const int epd_bitmap_allArray_LEN = ${names.length};\n` +
+        `const unsigned char* epd_bitmap_allArray[${names.length}] = {\n` +
+        `    ${names.join(",\n    ")}\n` +
+        `};`
+    );
+
+    return blocks.join("\n\n") + "\n";
+}
+
+function download(data, filename, type = "application/octet-stream") {
+    const blob = data instanceof Blob ? data : new Blob([data], { type });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// Tombol yang butuh waktu (encode GIF / ZIP): nonaktif + teks status selama berjalan
+async function withBusyButton(btn, busyText, fn) {
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = busyText;
+    try {
+        await fn();
+    } catch (err) {
+        console.error(err);
+        alert("Gagal: " + (err.message || err));
+    } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+    }
+}
+
+$("downloadBinBtn").addEventListener("click", () => {
+    const { w, h } = resultSize;
+    const frameBytes = Math.ceil(w / 8) * h;
+    const bin = new Uint8Array(results.length * frameBytes);
+    results.forEach((f, i) => bin.set(packBits(f.bits, w, h), i * frameBytes));
+    download(bin, "frame.bin");
+});
+
+// Bit (0/1) langsung jadi indeks palet hitam-putih
+$("downloadGifBtn").addEventListener("click", (e) => withBusyButton(e.currentTarget, "Membuat...", async () => {
+    const { GIFEncoder } = await loadGifenc();
+    const encoder = GIFEncoder();
+    const palette = [[0, 0, 0], [255, 255, 255]];
+    for (const f of results) {
+        encoder.writeFrame(f.bits, resultSize.w, resultSize.h, { palette, delay: f.delay });
+    }
+    encoder.finish();
+    download(encoder.bytes(), `${source.name}_oled.gif`, "image/gif");
+}));
+
+$("downloadZipBtn").addEventListener("click", (e) => withBusyButton(e.currentTarget, "Membuat...", async () => {
+    const JSZip = await loadJSZip();
+    const zip = new JSZip();
+    const canvas = document.createElement("canvas");
+
+    for (let i = 0; i < results.length; i++) {
+        drawBits(canvas, results[i].bits, resultSize.w, resultSize.h, false);
+        const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
+        zip.file(frameName(i) + ".png", blob);
+    }
+
+    download(await zip.generateAsync({ type: "blob" }), `${source.name}_frames.zip`);
+}));
+
+$("downloadCodeBtn").addEventListener("click", () => {
+    download($("codeOutput").value, `${source.name}.h`, "text/plain");
+});
+
+$("copyCodeBtn").addEventListener("click", async (e) => {
+    const codeOutput = $("codeOutput");
+    if (!codeOutput.value) return;
+    const btn = e.currentTarget;
+    try {
+        await navigator.clipboard.writeText(codeOutput.value);
+    } catch {
+        codeOutput.select();
+        document.execCommand("copy");
+    }
+    btn.textContent = "Copied!";
+    setTimeout(() => { btn.textContent = "Copy kode"; }, 1500);
+});
+
+// ===================== PENGATURAN TERSIMPAN =====================
+function saveSettings() {
+    try {
+        const data = { screen };
+        for (const id of SAVED_INPUTS) {
+            const el = $(id);
+            data[id] = el.type === "checkbox" ? el.checked : el.value;
+        }
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(data));
+    } catch {}
+}
+
+function loadSettings() {
+    try {
+        const data = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+        if (!data) return;
+        for (const id of SAVED_INPUTS) {
+            if (!(id in data)) continue;
+            const el = $(id);
+            if (el.type === "checkbox") el.checked = !!data[id];
+            else el.value = data[id];
+        }
+        if (SCREEN_COLORS[data.screen]) screen = data.screen;
+    } catch {}
+}
+
+loadSettings();
+document.querySelector(`input[name="screen"][value="${screen}"]`).checked = true;
+Object.keys(ADJUSTMENTS).forEach(updateAdjustLabel);
+setPlayIcon(false);
+renderStepper();
+updateNav();
+</script>
+
+</body>
+</html>

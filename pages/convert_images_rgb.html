@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Ilmi Project Animator - Background Rasi RGB</title>
+    <link rel="icon" type="image/svg+xml" href="../images/logo.svg" />
+
+    <link rel="stylesheet" href="../css/style.css" />
+    <script type="module">
+      import { requireAuth, logout } from "../js/auth-guard.js";
+      requireAuth();
+      window.__raLogout = logout;
+    </script>
+</head>
+
+<!-- class "invisible" dilepas oleh auth-guard.js setelah PIN terverifikasi,
+     supaya tidak ada flash konten sebelum redirect -->
+<body class="invisible min-h-screen p-4 sm:p-6 font-sans text-slate-700 bg-gradient-to-br from-slate-50 via-white to-indigo-50">
+
+<div class="max-w-7xl mx-auto">
+
+    <!-- ROUTE NAVBAR -->
+    <header class="bg-white/85 backdrop-blur-sm border border-slate-200/80 rounded-2xl shadow-md shadow-indigo-100/40 px-3 py-2.5 sm:px-4 sm:py-3 mb-4 sm:mb-6">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <div class="flex items-center gap-2 min-w-0">
+          <img src="../images/logo.svg" alt="logo" class="w-6 h-6 shrink-0" />
+          <span class="text-sm font-semibold text-slate-700 truncate">Ilmi Project Animator</span>
+        </div>
+        <button id="logoutBtn" class="shrink-0 text-xs sm:text-sm text-slate-500 hover:text-red-500 transition-colors">
+          Keluar
+        </button>
+      </div>
+
+      <!-- Tambahkan <a class="..."> baru di sini kalau modul bertambah.
+           flex-wrap otomatis menyusun tombol turun baris, tanpa perlu ubah apa pun lagi. -->
+      <nav class="flex flex-wrap gap-1.5">
+        <a href="convert_gif.html"
+           class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
+          Animasi Rasi
+        </a>
+        <a href="convert_images_rgb.html"
+           class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-indigo-600 text-white shadow-sm shadow-indigo-300/50">
+          Background Rasi RGB
+        </a>
+        <a href="animasi_rgb.html"
+           class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
+          Animasi Rasi RGB
+        </a>
+      </nav>
+    </header>
+
+    <h1 class="text-xl sm:text-2xl font-semibold text-slate-800 mb-4 sm:mb-6">
+        Background Rasi RGB
+    </h1>
+
+    <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4 sm:p-6 mb-6">
+        <div class="grid sm:grid-cols-3 gap-4">
+            <div>
+                <label class="font-medium text-sm text-slate-700 block mb-2">Upload Image</label>
+                <input type="file" id="imageInput" accept="image/*"
+                       class="w-full border border-slate-300 rounded-lg p-2 text-sm
+                              focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+            </div>
+
+            <div>
+                <label class="font-medium text-sm text-slate-700 block mb-2">Resize Mode</label>
+                <select id="resizeMode"
+                        class="w-full border border-slate-300 rounded-lg p-2 text-sm
+                               focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                    <option value="cover" selected>Cover (Bisa digeser)</option>
+                    <option value="contain">Contain</option>
+                    <option value="stretch">Stretch</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="font-medium text-sm text-slate-700 block mb-2">Output Size</label>
+                <select id="outputSize"
+                        class="w-full border border-slate-300 rounded-lg p-2 text-sm
+                               focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                    <option value="160x128" selected>160 × 128 (16 bit)</option>
+                    <option value="240x240">240 × 240 (8 bit)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Penyesuaian gambar, berlaku untuk semua format output -->
+        <div class="mt-4 pt-4 border-t border-slate-200">
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label class="font-medium text-sm text-slate-700 flex justify-between mb-2">
+                        Brightness <span id="brightnessValue" class="text-slate-500 font-normal">100%</span>
+                    </label>
+                    <input type="range" id="brightnessInput" min="0" max="200" step="1" value="100"
+                           class="w-full accent-indigo-600">
+                </div>
+
+                <div>
+                    <label class="font-medium text-sm text-slate-700 flex justify-between mb-2">
+                        Contrast <span id="contrastValue" class="text-slate-500 font-normal">100%</span>
+                    </label>
+                    <input type="range" id="contrastInput" min="0" max="200" step="1" value="100"
+                           class="w-full accent-indigo-600">
+                </div>
+
+                <div>
+                    <label class="font-medium text-sm text-slate-700 flex justify-between mb-2">
+                        Saturation <span id="saturationValue" class="text-slate-500 font-normal">100%</span>
+                    </label>
+                    <input type="range" id="saturationInput" min="0" max="200" step="1" value="100"
+                           class="w-full accent-indigo-600">
+                </div>
+
+                <div>
+                    <label class="font-medium text-sm text-slate-700 flex justify-between mb-2">
+                        Blur <span id="blurValue" class="text-slate-500 font-normal">0 px</span>
+                    </label>
+                    <input type="range" id="blurInput" min="0" max="10" step="0.5" value="0"
+                           class="w-full accent-indigo-600">
+                </div>
+
+                <div>
+                    <label class="font-medium text-sm text-slate-700 flex justify-between mb-2">
+                        Sharpen <span id="sharpenValue" class="text-slate-500 font-normal">0%</span>
+                    </label>
+                    <input type="range" id="sharpenInput" min="0" max="100" step="1" value="0"
+                           class="w-full accent-indigo-600">
+                </div>
+
+                <div>
+                    <label class="font-medium text-sm text-slate-700 flex justify-between mb-2">
+                        Zoom <span id="zoomValue" class="text-slate-500 font-normal">100%</span>
+                    </label>
+                    <input type="range" id="zoomInput" min="100" max="400" step="5" value="100"
+                           class="w-full accent-indigo-600 disabled:opacity-40">
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 mt-4">
+                <button id="rotateLeftBtn" class="px-3 py-2 rounded-xl text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    ⟲ 90°
+                </button>
+                <button id="rotateRightBtn" class="px-3 py-2 rounded-xl text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    ⟳ 90°
+                </button>
+                <span class="text-sm text-slate-500 mr-2">Rotasi: <span id="rotationValue">0°</span></span>
+
+                <button id="flipHBtn" class="px-3 py-2 rounded-xl text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    Flip H
+                </button>
+                <button id="flipVBtn" class="px-3 py-2 rounded-xl text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    Flip V
+                </button>
+
+                <label class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 cursor-pointer">
+                    <input type="checkbox" id="ditherInput" class="w-4 h-4 accent-indigo-600">
+                    Dithering
+                </label>
+
+                <button id="resetAdjustBtn" class="ml-auto px-4 py-2 rounded-xl text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-500">
+                    Reset
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4">
+            <h2 class="font-semibold text-slate-700 mb-3 text-sm">Original</h2>
+            <canvas id="originalCanvas" class="border border-slate-200 rounded-lg w-full bg-black"></canvas>
+        </div>
+
+        <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4">
+            <h2 class="font-semibold text-slate-700 mb-1 text-sm">Resized <span id="resizedLabel">160×128</span></h2>
+            <p class="text-xs text-slate-400 mb-2">Geser foto atau klik & gunakan panah keyboard</p>
+            <canvas id="resizedCanvas" 
+                    width="160" height="128" 
+                    class="border border-slate-200 rounded-lg w-full cursor-grab active:cursor-grabbing focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-black" 
+                    tabindex="0"></canvas>
+        </div>
+
+        <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4 sm:col-span-2 lg:col-span-1">
+            <h2 class="font-semibold text-slate-700 mb-1 text-sm">RGB Preview</h2>
+            <p class="text-xs text-slate-400 mb-2">Format: <span id="formatLabel">RGB565 (16 bit)</span></p>
+            <canvas id="rgbCanvas" width="160" height="128" class="border border-slate-200 rounded-lg w-full bg-black"></canvas>
+        </div>
+    </div>
+
+    <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-5 sm:p-6 mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="text-sm text-slate-600">
+            <div>Resolution: <span id="resolutionLabel" class="font-semibold text-slate-800">160 × 128 (16 bit)</span></div>
+            <div>File Size: <span id="fileSize" class="font-semibold text-slate-800">0 bytes</span></div>
+        </div>
+        <button id="downloadBtn" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors">
+            Download BIN
+        </button>
+    </div>
+
+    <!-- Kode C array, hanya tampil untuk format 8 bit (240x240) -->
+    <div id="codePanel" class="hidden bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-5 sm:p-6 mt-6">
+        <div class="flex items-center justify-between gap-3 mb-3">
+            <h2 class="font-semibold text-slate-700 text-sm">C Array Code</h2>
+            <button id="copyCodeBtn" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-medium transition-colors">
+                Copy
+            </button>
+        </div>
+        <textarea id="codeOutput" readonly spellcheck="false"
+                  placeholder="Upload image untuk menghasilkan kode..."
+                  class="w-full h-72 border border-slate-300 rounded-lg p-3 font-mono text-xs text-slate-700 bg-slate-50 whitespace-pre
+                         focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition"></textarea>
+    </div>
+
+    <p class="mt-4 text-center text-slate-400 italic text-xs">
+      develop by ilmi project
+    </p>
+</div>
+
+<script>
+// Daftar output yang didukung.
+// Tambahkan entri baru di sini kalau ada ukuran/format lain.
+const OUTPUT_FORMATS = {
+    "160x128": { w: 160, h: 128, bpp: 16, name: "RGB565", bits: [5, 6, 5] },
+    "240x240": { w: 240, h: 240, bpp: 8,  name: "RGB332", bits: [3, 3, 2] }
+};
+
+// Slider penyesuaian gambar: nilai default + satuan label.
+// Tambahkan entri baru di sini (plus <input id="...Input"> & <span id="...Value">) kalau slider bertambah.
+const ADJUSTMENTS = {
+    brightness: { def: 100, unit: "%" },
+    contrast:   { def: 100, unit: "%" },
+    saturation: { def: 100, unit: "%" },
+    blur:       { def: 0,   unit: " px" },
+    sharpen:    { def: 0,   unit: "%" },
+    zoom:       { def: 100, unit: "%" }
+};
+
+let TARGET_W = 160;
+let TARGET_H = 128;
+let currentFormat = OUTPUT_FORMATS["160x128"];
+
+const imageInput = document.getElementById("imageInput");
+const resizeMode = document.getElementById("resizeMode");
+const outputSize = document.getElementById("outputSize");
+const zoomInput = document.getElementById("zoomInput");
+const ditherInput = document.getElementById("ditherInput");
+const logoutBtn = document.getElementById("logoutBtn");
+
+logoutBtn.addEventListener("click", () => {
+  if (window.__raLogout) window.__raLogout();
+});
+
+const originalCanvas = document.getElementById("originalCanvas");
+const resizedCanvas = document.getElementById("resizedCanvas");
+const rgbCanvas = document.getElementById("rgbCanvas");
+const codePanel = document.getElementById("codePanel");
+const codeOutput = document.getElementById("codeOutput");
+
+const originalCtx = originalCanvas.getContext("2d", { willReadFrequently: true });
+const resizedCtx = resizedCanvas.getContext("2d", { willReadFrequently: true });
+const rgbCtx = rgbCanvas.getContext("2d", { willReadFrequently: true });
+
+let outputBuffer = null;
+let currentImage = null;
+
+// Gambar sumber yang sudah diputar/di-flip, dipakai sebagai input resize
+const sourceCanvas = document.createElement("canvas");
+const sourceCtx = sourceCanvas.getContext("2d");
+let rotation = 0; // 0, 90, 180, 270
+let flipH = false;
+let flipV = false;
+
+// Variabel untuk Panning/Geser
+let offsetX = 0;
+let offsetY = 0;
+let needsCenter = true;
+let imgDrawW = 0;
+let imgDrawH = 0;
+
+// Variabel state Dragging
+let isDragging = false;
+let startX = 0;
+let startY = 0;
+let initialOffsetX = 0;
+let initialOffsetY = 0;
+
+// Event Listeners Dasar
+imageInput.addEventListener("change", handleImageUpload);
+resizeMode.addEventListener("change", () => {
+    zoomInput.disabled = resizeMode.value === "stretch"; // Zoom tidak berlaku di mode stretch
+    resetOffset(); // Kembalikan ke tengah saat mode berubah
+    renderImage();
+});
+outputSize.addEventListener("change", () => {
+    applyOutputFormat();
+    resetOffset(); // Ukuran target berubah, mulai lagi dari tengah
+    renderImage();
+});
+ditherInput.addEventListener("change", renderImage);
+
+// --- SLIDER PENYESUAIAN ---
+function adj(key) {
+    return Number(document.getElementById(key + "Input").value);
+}
+
+function updateAdjustLabel(key) {
+    document.getElementById(key + "Value").innerText = adj(key) + ADJUSTMENTS[key].unit;
+}
+
+Object.keys(ADJUSTMENTS).forEach(key => {
+    document.getElementById(key + "Input").addEventListener("input", () => {
+        updateAdjustLabel(key);
+        renderImage();
+    });
+});
+
+// Reset hanya slider; rotasi, flip & dithering dibiarkan karena biasanya mengikuti hardware
+document.getElementById("resetAdjustBtn").addEventListener("click", () => {
+    Object.entries(ADJUSTMENTS).forEach(([key, cfg]) => {
+        document.getElementById(key + "Input").value = cfg.def;
+        updateAdjustLabel(key);
+    });
+    renderImage();
+});
+
+// --- ROTASI & FLIP ---
+function setToggle(btn, on) {
+    btn.classList.toggle("bg-indigo-600", on);
+    btn.classList.toggle("text-white", on);
+    btn.classList.toggle("hover:bg-indigo-700", on);
+    btn.classList.toggle("bg-slate-100", !on);
+    btn.classList.toggle("text-slate-600", !on);
+    btn.classList.toggle("hover:bg-slate-200", !on);
+}
+
+function changeOrientation() {
+    document.getElementById("rotationValue").innerText = rotation + "°";
+    buildSource();
+    resetOffset();
+    renderImage();
+}
+
+document.getElementById("rotateLeftBtn").addEventListener("click", () => {
+    rotation = (rotation + 270) % 360;
+    changeOrientation();
+});
+document.getElementById("rotateRightBtn").addEventListener("click", () => {
+    rotation = (rotation + 90) % 360;
+    changeOrientation();
+});
+document.getElementById("flipHBtn").addEventListener("click", (e) => {
+    flipH = !flipH;
+    setToggle(e.currentTarget, flipH);
+    changeOrientation();
+});
+document.getElementById("flipVBtn").addEventListener("click", (e) => {
+    flipV = !flipV;
+    setToggle(e.currentTarget, flipV);
+    changeOrientation();
+});
+
+// Flip dilakukan di ruang layar (setelah rotasi), jadi Flip H selalu mencerminkan kiri-kanan hasil akhir
+function buildSource() {
+    if (!currentImage) return;
+    const img = currentImage;
+    const swap = rotation % 180 !== 0;
+
+    // Mengubah ukuran canvas sekaligus me-reset transform
+    sourceCanvas.width = swap ? img.height : img.width;
+    sourceCanvas.height = swap ? img.width : img.height;
+
+    sourceCtx.translate(sourceCanvas.width / 2, sourceCanvas.height / 2);
+    sourceCtx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+    sourceCtx.rotate(rotation * Math.PI / 180);
+    sourceCtx.drawImage(img, -img.width / 2, -img.height / 2);
+}
+
+// Menyesuaikan ukuran canvas + label dengan format yang dipilih
+function applyOutputFormat() {
+    currentFormat = OUTPUT_FORMATS[outputSize.value];
+    TARGET_W = currentFormat.w;
+    TARGET_H = currentFormat.h;
+
+    resizedCanvas.width = TARGET_W;
+    resizedCanvas.height = TARGET_H;
+    rgbCanvas.width = TARGET_W;
+    rgbCanvas.height = TARGET_H;
+
+    const label = `${TARGET_W} × ${TARGET_H} (${currentFormat.bpp} bit)`;
+    document.getElementById("resizedLabel").innerText = `${TARGET_W}×${TARGET_H}`;
+    document.getElementById("formatLabel").innerText = `${currentFormat.name} (${currentFormat.bpp} bit)`;
+    document.getElementById("resolutionLabel").innerText = label;
+
+    // Canvas yang di-resize otomatis kosong (hitam) sampai render berikutnya
+    resizedCtx.fillStyle = "black";
+    resizedCtx.fillRect(0, 0, TARGET_W, TARGET_H);
+
+    outputBuffer = null;
+    document.getElementById("fileSize").innerText = "0 bytes";
+
+    codePanel.classList.toggle("hidden", currentFormat.bpp !== 8);
+    codeOutput.value = "";
+}
+
+// --- FUNGSI MENGAMBIL KOORDINAT MOUSE/TOUCH ---
+function getClientPos(e) {
+    if (e.touches && e.touches.length > 0) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+    return { x: e.clientX, y: e.clientY };
+}
+
+// --- EVENT LISTENERS UNTUK DRAG & DROP ---
+function startDrag(e) {
+    if (!currentImage || resizeMode.value === "stretch") return;
+    isDragging = true;
+    const pos = getClientPos(e);
+    startX = pos.x;
+    startY = pos.y;
+    initialOffsetX = offsetX;
+    initialOffsetY = offsetY;
+}
+
+function onDrag(e) {
+    if (!isDragging) return;
+    e.preventDefault(); // Mencegah scrolling halaman saat digeser di HP
+
+    const pos = getClientPos(e);
+    // Menyesuaikan rasio pergeseran mouse dengan ukuran canvas aktual di layar vs resolusi 160x128
+    const rect = resizedCanvas.getBoundingClientRect();
+    const scaleX = resizedCanvas.width / rect.width;
+    const scaleY = resizedCanvas.height / rect.height;
+
+    const dx = (pos.x - startX) * scaleX;
+    const dy = (pos.y - startY) * scaleY;
+
+    offsetX = initialOffsetX + dx;
+    offsetY = initialOffsetY + dy;
+    
+    renderImage();
+}
+
+function endDrag() {
+    isDragging = false;
+}
+
+// Mouse Events
+resizedCanvas.addEventListener("mousedown", startDrag);
+window.addEventListener("mousemove", onDrag);
+window.addEventListener("mouseup", endDrag);
+
+// Touch Events (Untuk HP)
+resizedCanvas.addEventListener("touchstart", startDrag, { passive: false });
+window.addEventListener("touchmove", onDrag, { passive: false });
+window.addEventListener("touchend", endDrag);
+
+// --- EVENT LISTENER UNTUK KEYBOARD (PANAH) ---
+resizedCanvas.addEventListener("keydown", (e) => {
+    if (!currentImage || resizeMode.value === "stretch") return;
+
+    const step = 5; // Kecepatan geser pixel
+    let moved = false;
+
+    if (e.key === "ArrowUp") { offsetY -= step; moved = true; }
+    else if (e.key === "ArrowDown") { offsetY += step; moved = true; }
+    else if (e.key === "ArrowLeft") { offsetX -= step; moved = true; }
+    else if (e.key === "ArrowRight") { offsetX += step; moved = true; }
+
+    if (moved) {
+        e.preventDefault(); // Mencegah scrolling layar
+        renderImage();
+    }
+});
+
+// --- LOGIKA UTAMA ---
+
+function handleImageUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const img = new Image();
+    img.onload = () => {
+        currentImage = img;
+        
+        // Tampilkan gambar original
+        originalCanvas.width = img.width;
+        originalCanvas.height = img.height;
+        originalCtx.clearRect(0, 0, img.width, img.height);
+        originalCtx.drawImage(img, 0, 0);
+
+        buildSource();
+        resetOffset();
+        renderImage();
+    };
+    img.src = URL.createObjectURL(file);
+}
+
+function resetOffset() {
+    offsetX = 0;
+    offsetY = 0;
+    needsCenter = true;
+}
+
+function renderImage() {
+    if (!currentImage) return;
+
+    const img = sourceCanvas;
+    resizedCtx.clearRect(0, 0, TARGET_W, TARGET_H);
+    resizedCtx.fillStyle = "black";
+    resizedCtx.fillRect(0, 0, TARGET_W, TARGET_H);
+
+    const mode = resizeMode.value;
+
+    resizedCtx.filter =
+        `brightness(${adj("brightness")}%) contrast(${adj("contrast")}%) ` +
+        `saturate(${adj("saturation")}%) blur(${adj("blur")}px)`;
+
+    if (mode === "stretch") {
+        resizedCtx.drawImage(img, 0, 0, TARGET_W, TARGET_H);
+    } else {
+        const scaleX = TARGET_W / img.width;
+        const scaleY = TARGET_H / img.height;
+        const fitScale = mode === "cover" ? Math.max(scaleX, scaleY) : Math.min(scaleX, scaleY);
+        const scale = fitScale * adj("zoom") / 100;
+
+        const prevDrawW = imgDrawW;
+        const prevDrawH = imgDrawH;
+        imgDrawW = img.width * scale;
+        imgDrawH = img.height * scale;
+
+        if (needsCenter) {
+            offsetX = (TARGET_W - imgDrawW) / 2;
+            offsetY = (TARGET_H - imgDrawH) / 2;
+            needsCenter = false;
+        } else if (prevDrawW && prevDrawW !== imgDrawW) {
+            // Zoom berubah: pertahankan titik tengah tampilan
+            offsetX = TARGET_W / 2 - (TARGET_W / 2 - offsetX) * imgDrawW / prevDrawW;
+            offsetY = TARGET_H / 2 - (TARGET_H / 2 - offsetY) * imgDrawH / prevDrawH;
+        }
+
+        // Validasi dan Batasi (Clamp) Offset agar gambar tidak keluar batas
+        if (imgDrawW > TARGET_W) {
+            // Bisa digeser kiri-kanan
+            offsetX = Math.max(TARGET_W - imgDrawW, Math.min(0, offsetX));
+        } else {
+            // Kunci di tengah
+            offsetX = (TARGET_W - imgDrawW) / 2;
+        }
+
+        if (imgDrawH > TARGET_H) {
+            // Bisa digeser atas-bawah
+            offsetY = Math.max(TARGET_H - imgDrawH, Math.min(0, offsetY));
+        } else {
+            // Kunci di tengah
+            offsetY = (TARGET_H - imgDrawH) / 2;
+        }
+
+        resizedCtx.drawImage(img, offsetX, offsetY, imgDrawW, imgDrawH);
+    }
+
+    resizedCtx.filter = "none";
+    applySharpen(adj("sharpen") / 100);
+    convertImage();
+}
+
+// Sharpen 3x3 (Laplacian) dengan kekuatan 0..1. Pixel di tepi memakai tetangga terdekat.
+function applySharpen(amount) {
+    if (amount <= 0) return;
+
+    const imageData = resizedCtx.getImageData(0, 0, TARGET_W, TARGET_H);
+    const src = imageData.data;
+    const out = new Uint8ClampedArray(src);
+
+    for (let y = 0; y < TARGET_H; y++) {
+        const row = y * TARGET_W;
+        const rowUp = Math.max(0, y - 1) * TARGET_W;
+        const rowDown = Math.min(TARGET_H - 1, y + 1) * TARGET_W;
+
+        for (let x = 0; x < TARGET_W; x++) {
+            const xLeft = Math.max(0, x - 1);
+            const xRight = Math.min(TARGET_W - 1, x + 1);
+
+            const i = (row + x) * 4;
+            const iUp = (rowUp + x) * 4;
+            const iDown = (rowDown + x) * 4;
+            const iLeft = (row + xLeft) * 4;
+            const iRight = (row + xRight) * 4;
+
+            for (let c = 0; c < 3; c++) {
+                const laplacian = 4 * src[i + c] - src[iUp + c] - src[iDown + c] - src[iLeft + c] - src[iRight + c];
+                out[i + c] = src[i + c] + amount * laplacian;
+            }
+        }
+    }
+
+    imageData.data.set(out);
+    resizedCtx.putImageData(imageData, 0, 0);
+}
+
+function convertImage() {
+    convertPixels();
+    document.getElementById("fileSize").innerText = outputBuffer.length + " bytes";
+
+    if (currentFormat.bpp === 8) scheduleCodeUpdate();
+}
+
+// Generate kode C di-debounce, karena 57.600 byte terlalu berat
+// untuk ditulis ulang di setiap gerakan drag
+let codeTimer = null;
+function scheduleCodeUpdate() {
+    clearTimeout(codeTimer);
+    codeTimer = setTimeout(generateCode, 150);
+}
+
+function generateCode() {
+    if (!outputBuffer || currentFormat.bpp !== 8) return;
+
+    const lines = [];
+    for (let i = 0; i < outputBuffer.length; i += 16) {
+        const row = [];
+        for (let j = i; j < Math.min(i + 16, outputBuffer.length); j++) {
+            row.push("0x" + outputBuffer[j].toString(16).toUpperCase().padStart(2, "0"));
+        }
+        lines.push("    " + row.join(", ") + ",");
+    }
+
+    codeOutput.value =
+        `// Image Size: ${TARGET_W}x${TARGET_H}, Format: 8-bit ${currentFormat.name}\n` +
+        `static const uint8_t PROGMEM bg_8bit_data[] = {\n` +
+        lines.join("\n") + "\n" +
+        `};\n`;
+}
+
+document.getElementById("copyCodeBtn").addEventListener("click", async (e) => {
+    if (!codeOutput.value) return;
+    const btn = e.currentTarget;
+    try {
+        await navigator.clipboard.writeText(codeOutput.value);
+    } catch {
+        codeOutput.select();
+        document.execCommand("copy");
+    }
+    btn.innerText = "Copied!";
+    setTimeout(() => { btn.innerText = "Copy"; }, 1500);
+});
+
+// Kuantisasi tiap channel ke jumlah bit format lalu dikemas big endian:
+//   16 bit RGB565: RRRRRGGG GGGBBBBB (2 byte per pixel)
+//    8 bit RGB332: RRRGGGBB          (1 byte per pixel)
+// Dithering Floyd–Steinberg menyebarkan error kuantisasi ke pixel tetangga
+// supaya gradasi tidak terlihat belang.
+function convertPixels() {
+    const data = resizedCtx.getImageData(0, 0, TARGET_W, TARGET_H).data;
+    const bits = currentFormat.bits;
+    const maxLevel = bits.map(b => (1 << b) - 1);
+    const bytesPerPixel = currentFormat.bpp / 8;
+    const dither = ditherInput.checked;
+
+    outputBuffer = new Uint8Array(TARGET_W * TARGET_H * bytesPerPixel);
+    const preview = rgbCtx.createImageData(TARGET_W, TARGET_H);
+
+    // Salinan float supaya error dithering bisa diakumulasi tanpa terpotong 0..255
+    const work = Float32Array.from(data);
+    const level = [0, 0, 0];
+
+    let p = 0;
+
+    for (let y = 0; y < TARGET_H; y++) {
+        for (let x = 0; x < TARGET_W; x++) {
+            const i = (y * TARGET_W + x) * 4;
+
+            for (let c = 0; c < 3; c++) {
+                const old = Math.min(255, Math.max(0, work[i + c]));
+                // Tanpa dithering tetap dipotong (truncate) seperti sebelumnya
+                level[c] = dither ? Math.round(old * maxLevel[c] / 255) : old >> (8 - bits[c]);
+
+                const quantized = level[c] * 255 / maxLevel[c];
+                preview.data[i + c] = quantized;
+
+                if (dither) {
+                    const err = old - quantized;
+                    const below = i + TARGET_W * 4;
+                    if (x + 1 < TARGET_W) work[i + 4 + c] += err * 7 / 16;
+                    if (y + 1 < TARGET_H) {
+                        if (x > 0) work[below - 4 + c] += err * 3 / 16;
+                        work[below + c] += err * 5 / 16;
+                        if (x + 1 < TARGET_W) work[below + 4 + c] += err * 1 / 16;
+                    }
+                }
+            }
+            preview.data[i + 3] = 255;
+
+            const value = (level[0] << (bits[1] + bits[2])) | (level[1] << bits[2]) | level[2];
+            if (bytesPerPixel === 2) outputBuffer[p++] = value >> 8;
+            outputBuffer[p++] = value & 0xFF;
+        }
+    }
+
+    rgbCtx.putImageData(preview, 0, 0);
+}
+
+document.getElementById("downloadBtn").addEventListener("click", () => {
+    if (!outputBuffer) {
+        alert("Upload image first.");
+        return;
+    }
+
+    const blob = new Blob([outputBuffer], { type: "application/octet-stream" });
+    const a = document.createElement("a");
+
+    a.href = URL.createObjectURL(blob);
+    a.download = "image.bin";
+    a.click();
+
+    URL.revokeObjectURL(a.href);
+});
+
+// Sinkronkan canvas & label dengan pilihan awal
+applyOutputFormat();
+
+</script>
+
+</body>
+</html>

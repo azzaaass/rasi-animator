@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Ilmi Project Animator - Animasi Rasi RGB</title>
+    <link rel="icon" type="image/svg+xml" href="../images/logo.svg" />
+
+    <link rel="stylesheet" href="../css/style.css" />
+    <script type="module">
+      import { requireAuth, logout } from "../js/auth-guard.js";
+      requireAuth();
+      window.__raLogout = logout;
+    </script>
+</head>
+
+<!-- class "invisible" dilepas oleh auth-guard.js setelah PIN terverifikasi,
+     supaya tidak ada flash konten sebelum redirect -->
+<body class="invisible min-h-screen p-4 sm:p-6 pb-28 lg:pb-6 font-sans text-slate-700 bg-gradient-to-br from-slate-50 via-white to-indigo-50">
+
+<div class="max-w-5xl mx-auto">
+
+    <!-- ROUTE NAVBAR -->
+    <header class="bg-white/85 backdrop-blur-sm border border-slate-200/80 rounded-2xl shadow-md shadow-indigo-100/40 px-3 py-2.5 sm:px-4 sm:py-3 mb-4 sm:mb-6">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <div class="flex items-center gap-2 min-w-0">
+          <img src="../images/logo.svg" alt="logo" class="w-6 h-6 shrink-0" />
+          <span class="text-sm font-semibold text-slate-700 truncate">Ilmi Project Animator</span>
+        </div>
+        <button id="logoutBtn" class="shrink-0 text-xs sm:text-sm text-slate-500 hover:text-red-500 transition-colors">
+          Keluar
+        </button>
+      </div>
+
+      <!-- Tambahkan <a class="..."> baru di sini kalau modul bertambah.
+           flex-wrap otomatis menyusun tombol turun baris, tanpa perlu ubah apa pun lagi. -->
+      <nav class="flex flex-wrap gap-1.5">
+        <a href="convert_gif.html"
+           class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
+          Animasi Rasi
+        </a>
+        <a href="convert_images_rgb.html"
+           class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
+          Background Rasi RGB
+        </a>
+        <a href="animasi_rgb.html"
+           class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-indigo-600 text-white shadow-sm shadow-indigo-300/50">
+          Animasi Rasi RGB
+        </a>
+      </nav>
+    </header>
+
+    <!-- STEPPER (diisi JS) -->
+    <ol id="stepper" class="flex items-start mb-4 sm:mb-6" aria-label="Langkah"></ol>
+
+    <main class="bg-white/95 border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4 sm:p-6">
+
+        <!-- ================= 1. INPUT ================= -->
+        <section data-step="1">
+            <h2 class="font-semibold text-slate-800">1. Input</h2>
+            <p class="text-sm text-slate-500 mb-5">Pilih file GIF yang akan dijadikan animasi layar RGB</p>
+
+            <div class="max-w-xl space-y-4">
+                <div id="dropZone"
+                     class="border-2 border-dashed border-indigo-300 rounded-2xl p-6 sm:p-8 text-center cursor-pointer transition-colors hover:bg-indigo-50/60">
+                    <p id="dropText" class="text-slate-600">
+                        <span class="font-semibold text-indigo-600">Pilih file GIF</span> atau tarik ke sini
+                    </p>
+                    <p class="text-xs text-slate-400 mt-1">Hasil akhir juga berupa GIF</p>
+                    <input type="file" id="fileInput" accept="image/gif,.gif" class="hidden" />
+                </div>
+
+                <div id="sourceCard" class="hidden">
+                    <div class="flex items-center gap-3 p-4 rounded-2xl bg-indigo-50 border border-indigo-100">
+                        <span class="shrink-0 px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-xs font-semibold tracking-wide">GIF</span>
+                        <div class="min-w-0">
+                            <div id="sourceName" class="font-medium text-slate-800 truncate"></div>
+                            <div id="sourceMeta" class="text-xs text-slate-500"></div>
+                        </div>
+                    </div>
+                </div>
+                <p id="inputError" class="hidden text-sm text-red-500"></p>
+            </div>
+        </section>
+
+        <!-- ================= 2. DURASI ================= -->
+        <section data-step="2" class="hidden">
+            <h2 class="font-semibold text-slate-800">2. Durasi</h2>
+            <p class="text-sm text-slate-500 mb-5">Pilih bagian GIF yang dipakai dan kecepatannya</p>
+
+            <div class="grid lg:grid-cols-2 gap-5 lg:gap-6 items-start">
+                <div class="relative rounded-2xl bg-black overflow-hidden">
+                    <canvas id="gifCanvas" class="align-top w-full max-h-64 sm:max-h-80 object-contain"></canvas>
+                    <button id="playBtn" type="button" aria-label="Putar"
+                            class="absolute bottom-3 left-3 w-11 h-11 rounded-full bg-white/90 hover:bg-white text-indigo-600 shadow flex items-center justify-center transition-colors"></button>
+                    <span id="timeLabel" class="absolute bottom-3 right-3 px-2 py-1 rounded-lg bg-black/60 text-white text-xs font-mono">0.00 s</span>
+                </div>
+
+                <div class="space-y-5">
+                    <div>
+                        <div class="flex justify-between gap-3 text-sm">
+                            <span class="font-medium text-slate-700">Rentang</span>
+                            <span id="rangeLabel" class="text-slate-500"></span>
+                        </div>
+                        <div class="dual-range mt-1">
+                            <div class="dual-range-track"></div>
+                            <div id="rangeFill" class="dual-range-fill"></div>
+                            <div id="playhead" class="dual-range-playhead hidden"></div>
+                            <input type="range" id="startRange" min="0" max="1" step="0.01" value="0" aria-label="Mulai">
+                            <input type="range" id="endRange" min="0" max="1" step="0.01" value="1" aria-label="Selesai">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mt-2">
+                            <label class="text-xs text-slate-600">
+                                Mulai (detik)
+                                <input type="number" id="startInput" min="0" step="0.1" inputmode="decimal"
+                                       class="mt-1 w-full border border-slate-300 bg-white rounded-lg px-3 py-2 text-base sm:text-sm
+                                              focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                            </label>
+                            <label class="text-xs text-slate-600">
+                                Selesai (detik)
+                                <input type="number" id="endInput" min="0" step="0.1" inputmode="decimal"
+                                       class="mt-1 w-full border border-slate-300 bg-white rounded-lg px-3 py-2 text-base sm:text-sm
+                                              focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="speedInput" class="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                            Kecepatan <span id="speedValue" class="font-normal text-slate-500">1.00×</span>
+                        </label>
+                        <input type="range" id="speedInput" min="25" max="300" step="5" value="100" class="w-full accent-indigo-600">
+                    </div>
+
+                    <p id="durationEstimate" class="text-sm text-slate-500"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 3. ADJUST ================= -->
+        <section data-step="3" class="hidden">
+            <h2 class="font-semibold text-slate-800">3. Adjust</h2>
+            <p class="text-sm text-slate-500 mb-5">Atur ukuran, crop, dan warna. Pratinjau sudah memakai warna 16 bit (RGB565).</p>
+
+            <div class="grid lg:grid-cols-2 lg:grid-rows-[auto_1fr] gap-x-6 gap-y-5">
+                <div class="sticky top-0 z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 pt-2 pb-3 bg-white/95 backdrop-blur border-b border-slate-200
+                            lg:static lg:mx-0 lg:px-0 lg:pt-0 lg:pb-0 lg:bg-transparent lg:backdrop-blur-none lg:border-0 lg:col-start-1 lg:row-start-1">
+                    <div class="flex justify-between items-baseline mb-2">
+                        <span class="text-sm font-medium text-slate-700">Pratinjau</span>
+                        <span id="adjustSizeLabel" class="text-xs text-slate-500"></span>
+                    </div>
+                    <div class="rounded-xl bg-slate-950 p-2 sm:p-3 shadow-lg ring-1 ring-slate-800">
+                        <canvas id="previewCanvas" class="pixelated block w-full max-h-48 sm:max-h-72 object-contain rounded-sm bg-black"></canvas>
+                    </div>
+                    <div class="flex items-center gap-3 mt-2">
+                        <input type="range" id="posInput" min="0" max="1" step="0.01" value="0" aria-label="Posisi pratinjau"
+                               class="flex-1 accent-indigo-600">
+                        <span id="posValue" class="w-16 text-right text-xs font-mono text-slate-500">0.00 s</span>
+                    </div>
+                </div>
+
+                <div id="cropBox" class="lg:col-start-1 lg:row-start-2">
+                    <p class="text-xs text-slate-400 mb-2">Geser kotak untuk memilih area crop</p>
+                    <canvas id="sourceCanvas" class="block max-w-full max-h-64 mx-auto rounded-lg border border-slate-200 bg-black touch-none cursor-move"></canvas>
+                </div>
+
+                <div class="space-y-5 lg:col-start-2 lg:row-start-1 lg:row-span-2">
+                    <div>
+                        <div class="text-sm font-medium text-slate-700 mb-2">Ukuran layar</div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="size" value="160x128" class="peer sr-only" checked>
+                                <div class="h-full flex items-center gap-3 rounded-2xl border-2 border-slate-200 p-3 transition-colors peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-400">
+                                    <span class="shrink-0 w-10 h-8 rounded bg-slate-800"></span>
+                                    <span class="text-sm font-medium text-slate-800">160 × 128</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="size" value="240x240" class="peer sr-only">
+                                <div class="h-full flex items-center gap-3 rounded-2xl border-2 border-slate-200 p-3 transition-colors peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-400">
+                                    <span class="shrink-0 w-8 h-8 rounded bg-slate-800"></span>
+                                    <span class="text-sm font-medium text-slate-800">240 × 240</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <label class="flex items-center justify-between gap-3 cursor-pointer">
+                            <span>
+                                <span class="block text-sm font-medium text-slate-700">Crop (anti gepeng)</span>
+                                <span class="block text-xs text-slate-500">Potong sesuai rasio layar. Kalau mati, gambar ditarik penuh.</span>
+                            </span>
+                            <input type="checkbox" id="cropInput" class="peer sr-only" checked>
+                            <span class="switch"></span>
+                        </label>
+                        <div id="cropSettings">
+                            <label for="zoomInput" class="flex justify-between text-sm text-slate-700 mb-1">
+                                Zoom <span id="zoomValue" class="text-slate-500">100%</span>
+                            </label>
+                            <input type="range" id="zoomInput" min="100" max="400" step="5" value="100" class="w-full accent-indigo-600">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="brightnessInput" class="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                            Brightness <span id="brightnessValue" class="font-normal text-slate-500">100%</span>
+                        </label>
+                        <input type="range" id="brightnessInput" min="0" max="200" step="1" value="100" class="w-full accent-indigo-600">
+                    </div>
+
+                    <div>
+                        <label for="contrastInput" class="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                            Contrast <span id="contrastValue" class="font-normal text-slate-500">100%</span>
+                        </label>
+                        <input type="range" id="contrastInput" min="0" max="200" step="1" value="100" class="w-full accent-indigo-600">
+                    </div>
+
+                    <div>
+                        <label for="saturationInput" class="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                            Saturation <span id="saturationValue" class="font-normal text-slate-500">100%</span>
+                        </label>
+                        <input type="range" id="saturationInput" min="0" max="200" step="1" value="100" class="w-full accent-indigo-600">
+                    </div>
+
+                    <div>
+                        <label for="gammaInput" class="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                            <span>Gamma <span class="font-normal text-xs text-slate-400">(&gt; 1 mencerahkan area gelap)</span></span>
+                            <span id="gammaValue" class="font-normal text-slate-500">1.00</span>
+                        </label>
+                        <input type="range" id="gammaInput" min="50" max="250" step="5" value="100" class="w-full accent-indigo-600">
+                    </div>
+
+                    <button type="button" id="resetAdjustBtn"
+                            class="w-full sm:w-auto px-4 py-2 rounded-xl text-sm font-medium bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-500 transition-colors">
+                        Reset pengaturan
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 4. OPTIMASI ================= -->
+        <section data-step="4" class="hidden">
+            <h2 class="font-semibold text-slate-800">4. Optimasi</h2>
+            <p class="text-sm text-slate-500 mb-5">Perkecil ukuran file. Ukuran dihitung ulang setiap pengaturan diubah.</p>
+
+            <!-- HP: ringkasan ukuran menempel di atas. Desktop: hasil di kiri, pengaturan di kanan. -->
+            <div class="grid lg:grid-cols-2 lg:grid-rows-[auto_auto_1fr] gap-x-6 gap-y-5">
+                <div class="sticky top-0 z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 bg-white/95 backdrop-blur border-b border-slate-200
+                            lg:static lg:mx-0 lg:px-0 lg:py-0 lg:bg-transparent lg:backdrop-blur-none lg:border-0 lg:col-start-1 lg:row-start-1">
+                    <div class="flex items-baseline justify-between gap-3">
+                        <span class="text-sm text-slate-500">Ukuran file</span>
+                        <span id="optStatus" class="text-xs text-indigo-600"></span>
+                    </div>
+                    <div id="sizeValue" class="text-2xl font-semibold text-slate-800">–</div>
+                    <p id="baselineInfo" class="text-xs text-slate-500"></p>
+                    <div id="budgetBox" class="hidden mt-2">
+                        <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                            <div id="budgetBar" class="h-2 w-0 rounded-full transition-all"></div>
+                        </div>
+                        <p id="budgetText" class="text-xs mt-1"></p>
+                    </div>
+                </div>
+
+                <div class="lg:col-start-1 lg:row-start-2">
+                    <div class="rounded-xl bg-slate-950 p-2 sm:p-3 shadow-lg ring-1 ring-slate-800">
+                        <img id="resultImg" alt="Hasil GIF" class="pixelated block w-full max-h-72 object-contain rounded-sm bg-black">
+                    </div>
+                    <p id="resultInfo" class="text-sm text-slate-600 mt-2"></p>
+                </div>
+
+                <div class="space-y-5 lg:col-start-2 lg:row-start-1 lg:row-span-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="text-sm font-medium text-slate-700">
+                            Jumlah warna
+                            <select id="colorsInput"
+                                    class="mt-1 w-full border border-slate-300 bg-white rounded-lg px-3 py-2 text-base sm:text-sm font-normal
+                                           focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                                <option value="256">256</option>
+                                <option value="128" selected>128</option>
+                                <option value="64">64</option>
+                                <option value="32">32</option>
+                                <option value="16">16</option>
+                            </select>
+                        </label>
+                        <label class="text-sm font-medium text-slate-700">
+                            Kurangi frame
+                            <select id="skipInput"
+                                    class="mt-1 w-full border border-slate-300 bg-white rounded-lg px-3 py-2 text-base sm:text-sm font-normal
+                                           focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                                <option value="1" selected>Semua frame</option>
+                                <option value="2">Ambil 1 dari 2</option>
+                                <option value="3">Ambil 1 dari 3</option>
+                                <option value="4">Ambil 1 dari 4</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <label class="block text-sm font-medium text-slate-700">
+                        Dithering
+                        <select id="ditherInput"
+                                class="mt-1 w-full border border-slate-300 bg-white rounded-lg px-3 py-2 text-base sm:text-sm font-normal
+                                       focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                            <option value="none" selected>Tanpa dithering (paling kecil)</option>
+                            <option value="ordered">Ordered (halus, stabil antar frame)</option>
+                            <option value="floyd">Floyd–Steinberg (paling halus, ukuran bisa berlipat)</option>
+                        </select>
+                        <span class="block text-xs font-normal text-slate-500 mt-1">Dithering menyamarkan gradasi yang belang saat jumlah warna sedikit.</span>
+                    </label>
+
+                    <div class="space-y-1">
+                        <label class="flex items-center justify-between gap-3 cursor-pointer">
+                            <span>
+                                <span class="block text-sm font-medium text-slate-700">Optimasi frame</span>
+                                <span class="block text-xs text-slate-500">Hanya simpan bagian yang berubah dari frame sebelumnya</span>
+                            </span>
+                            <input type="checkbox" id="frameOptInput" class="peer sr-only" checked>
+                            <span class="switch"></span>
+                        </label>
+                        <p class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl p-3">
+                            Butuh decoder yang mendukung transparansi &amp; posisi frame, misalnya library AnimatedGIF dengan contoh GIFDraw bawaannya.
+                            Kalau animasi di perangkat terlihat rusak, matikan opsi ini.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label for="toleranceInput" class="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                            Abaikan perubahan kecil <span id="toleranceValue" class="font-normal text-slate-500">0 (tanpa kompromi)</span>
+                        </label>
+                        <input type="range" id="toleranceInput" min="0" max="48" step="2" value="0" class="w-full accent-indigo-600">
+                        <span class="block text-xs text-slate-500 mt-1">Perubahan warna sekecil ini dianggap sama. Efektif untuk GIF dari video yang "berbintik".</span>
+                    </div>
+
+                    <label class="block text-sm font-medium text-slate-700">
+                        Batas ukuran (KB) <span class="font-normal text-slate-400">opsional</span>
+                        <input type="number" id="budgetInput" min="1" step="1" inputmode="numeric" placeholder="misalnya 100"
+                               class="mt-1 w-full border border-slate-300 bg-white rounded-lg px-3 py-2 text-base sm:text-sm font-normal
+                                      focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                    </label>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 lg:col-start-1 lg:row-start-3 self-start">
+                    <button type="button" id="downloadGifBtn" class="col-span-2 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors disabled:opacity-50">
+                        Download GIF
+                    </button>
+                    <button type="button" id="downloadCodeBtn" class="py-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium transition-colors disabled:opacity-50">
+                        Kode (.h)
+                    </button>
+                    <button type="button" id="copyCodeBtn" class="py-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium transition-colors disabled:opacity-50">
+                        Copy kode
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- NAVIGASI: menempel di bawah layar pada HP, biasa di desktop -->
+        <div id="wizardNav"
+             class="fixed inset-x-0 bottom-0 z-20 flex gap-3 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-white/95 backdrop-blur border-t border-slate-200
+                    lg:static lg:z-auto lg:mt-6 lg:px-0 lg:pb-0 lg:pt-6 lg:bg-transparent lg:backdrop-blur-none">
+            <button type="button" id="backBtn"
+                    class="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium transition-colors">
+                Kembali
+            </button>
+            <button type="button" id="nextBtn"
+                    class="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors
+                           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-indigo-600">
+                Lanjut
+            </button>
+        </div>
+    </main>
+
+    <p class="mt-4 text-center text-slate-400 italic text-xs">
+      develop by ilmi project
+    </p>
+</div>
+
+<script type="module">
+// Library di-load saat dibutuhkan saja, supaya halaman tetap jalan walau CDN lambat
+const loadGifuct = () => import("https://cdn.jsdelivr.net/npm/gifuct-js@2.1.2/+esm");
+// quantize dari gifenc; LZW & stream diambil langsung supaya GIF bisa disusun sendiri
+// (frame parsial, transparansi, palet global, ukuran kode sesuai jumlah warna)
+const loadEncoder = () => Promise.all([
+    import("https://cdn.jsdelivr.net/npm/gifenc@1.0.3/+esm"),
+    import("https://cdn.jsdelivr.net/npm/gifenc@1.0.3/src/lzwEncode.js/+esm"),
+    import("https://cdn.jsdelivr.net/npm/gifenc@1.0.3/src/stream.js/+esm")
+]).then(([main, lzw, stream]) => ({ quantize: main.quantize, lzwEncode: lzw.default, createStream: stream.default }));
+
+const $ = (id) => document.getElementById(id);
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const nextTick = () => new Promise(r => setTimeout(r, 0));
+const baseName = (name) => name.replace(/\.[^.]+$/, "");
+
+$("logoutBtn").addEventListener("click", () => {
+    if (window.__raLogout) window.__raLogout();
+});
+
+// ===================== KONSTANTA =====================
+const STEPS = [
+    { n: 1, label: "Input" },
+    { n: 2, label: "Durasi" },
+    { n: 3, label: "Adjust" },
+    { n: 4, label: "Optimasi" }
+];
+
+const SIZES = {
+    "160x128": { w: 160, h: 128 },
+    "240x240": { w: 240, h: 240 }
+};
+
+// Slider: nilai default + cara menampilkan nilainya
+const SLIDERS = {
+    speed:      { def: 100, format: v => (v / 100).toFixed(2) + "×" },
+    zoom:       { def: 100, format: v => v + "%" },
+    brightness: { def: 100, format: v => v + "%" },
+    contrast:   { def: 100, format: v => v + "%" },
+    saturation: { def: 100, format: v => v + "%" },
+    gamma:      { def: 100, format: v => (v / 100).toFixed(2) },
+    tolerance:  { def: 0,   format: v => (Number(v) === 0 ? "0 (tanpa kompromi)" : String(v)) }
+};
+const COLOR_SLIDERS = ["brightness", "contrast", "saturation", "gamma"];
+
+// Pengaturan yang diingat per browser
+const SETTINGS_KEY = "rasi_anim_settings";
+const SAVED_INPUTS = ["speedInput", "cropInput", "brightnessInput", "contrastInput", "saturationInput", "gammaInput",
+    "colorsInput", "skipInput", "ditherInput", "frameOptInput", "toleranceInput", "budgetInput"];
+
+const MIN_GAP = 0.05; // jarak minimum mulai-selesai (detik)
+const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+
+const CHECK_ICON = `<svg viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5"><path fill-rule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z" clip-rule="evenodd"/></svg>`;
+const PLAY_ICON = `<svg viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 ml-0.5"><path d="M6.3 3.9A1 1 0 004.8 4.8v10.4a1 1 0 001.5.9l8.6-5.2a1 1 0 000-1.8L6.3 3.9z"/></svg>`;
+const PAUSE_ICON = `<svg viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M5.5 4h3v12h-3zM11.5 4h3v12h-3z"/></svg>`;
+
+// ===================== ELEMEN & STATE =====================
+const gifCanvas = $("gifCanvas");
+const gifCtx = gifCanvas.getContext("2d");
+const sourceCanvas = $("sourceCanvas");
+const sourceCtx = sourceCanvas.getContext("2d");
+const previewCanvas = $("previewCanvas");
+const previewCtx = previewCanvas.getContext("2d");
+const startRange = $("startRange");
+const endRange = $("endRange");
+const posInput = $("posInput");
+
+// Kanvas kerja untuk crop + resize
+const workCanvas = document.createElement("canvas");
+const workCtx = workCanvas.getContext("2d", { willReadFrequently: true });
+
+let step = 1;
+let source = null;        // { name, fileName, width, height, duration, frames: [{ canvas, start, delay }] }
+let sourceId = 0;         // naik setiap ganti sumber
+let sizeKey = "160x128";
+
+// Area crop: zoom 1..4, titik tengah dinormalisasi 0..1 terhadap ukuran sumber
+let cropZoom = 1;
+let cropCx = 0.5;
+let cropCy = 0.5;
+
+// Hasil langkah 3 untuk semua frame (RGBA ukuran layar), dihitung ulang kalau pengaturan berubah
+let rgbFrames = [];       // [{ data, delay }]
+let rgbKey = "";
+let rgbSize = { w: 160, h: 128 };
+let prepareToken = 0;
+
+let encodeToken = 0;
+let encodeTimer = null;
+let encodeKey = "";
+let gif = null;           // { bytes, frameCount, colorCount, duration }
+let gifUrl = null;
+let baselineSize = 0;
+let baselineKey = "";
+
+// ===================== NAVIGASI LANGKAH =====================
+function renderStepper() {
+    $("stepper").innerHTML = STEPS.map((s, i) => {
+        const done = s.n < step;
+        const current = s.n === step;
+
+        const circle = current ? "bg-indigo-600 text-white ring-4 ring-indigo-100"
+            : done ? "bg-indigo-600 text-white"
+            : "bg-white text-slate-400 border border-slate-300";
+        const label = current ? "text-indigo-700 font-semibold" : done ? "text-slate-600" : "text-slate-400";
+        const line = i === 0 ? "" :
+            `<li aria-hidden="true" class="flex-1 h-0.5 mt-4 rounded-full ${s.n <= step ? "bg-indigo-600" : "bg-slate-200"}"></li>`;
+
+        return line + `
+            <li>
+                <button type="button" data-goto="${s.n}" ${done ? "" : "disabled"} ${current ? 'aria-current="step"' : ""}
+                        class="flex flex-col items-center gap-1 w-14 sm:w-20 disabled:cursor-default">
+                    <span class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition ${circle}">
+                        ${done ? CHECK_ICON : s.n}
+                    </span>
+                    <span class="text-[11px] sm:text-xs ${label}">${s.label}</span>
+                </button>
+            </li>`;
+    }).join("");
+}
+
+$("stepper").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-goto]");
+    if (btn && !btn.disabled) goTo(Number(btn.dataset.goto));
+});
+
+function updateNav() {
+    $("backBtn").classList.toggle("hidden", step === 1);
+    $("nextBtn").textContent = step === 4 ? "Mulai lagi" : "Lanjut";
+    $("nextBtn").disabled = step === 1 && !source;
+}
+
+function goTo(n) {
+    if (step === 4 && n !== 4) {
+        // batalkan proses yang masih berjalan
+        prepareToken++;
+        encodeToken++;
+        clearTimeout(encodeTimer);
+    }
+    stopSegment();
+
+    step = n;
+    document.querySelectorAll("section[data-step]").forEach(s => {
+        s.classList.toggle("hidden", Number(s.dataset.step) !== n);
+    });
+    renderStepper();
+    updateNav();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    if (n === 2) enterDuration();
+    else if (n === 3) enterAdjust();
+    else if (n === 4) enterOptimize();
+}
+
+$("nextBtn").addEventListener("click", () => {
+    if ($("nextBtn").disabled) return;
+    goTo(step === 4 ? 1 : step + 1);
+});
+
+$("backBtn").addEventListener("click", () => goTo(step - 1));
+
+// ===================== 1. INPUT =====================
+const dropZone = $("dropZone");
+const fileInput = $("fileInput");
+const DROP_TEXT = $("dropText").innerHTML;
+
+dropZone.addEventListener("click", () => fileInput.click());
+dropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropZone.classList.add("bg-indigo-50");
+});
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("bg-indigo-50"));
+dropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropZone.classList.remove("bg-indigo-50");
+    handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener("change", () => {
+    handleFile(fileInput.files[0]);
+    fileInput.value = ""; // supaya file yang sama bisa dipilih lagi
+});
+
+function showInputError(msg) {
+    $("inputError").textContent = msg;
+    $("inputError").classList.toggle("hidden", !msg);
+}
+
+async function handleFile(file) {
+    if (!file) return;
+    showInputError("");
+
+    if (file.type !== "image/gif" && !/\.gif$/i.test(file.name)) {
+        showInputError("Format tidak didukung. Gunakan file GIF.");
+        return;
+    }
+
+    $("dropText").textContent = `Memuat ${file.name}...`;
+    try {
+        const src = await loadGif(file);
+        src.name = baseName(file.name);
+        src.fileName = file.name;
+        setSource(src);
+    } catch (err) {
+        console.error(err);
+        showInputError(`Gagal memuat ${file.name}: ${err.message || err}`);
+    } finally {
+        $("dropText").innerHTML = DROP_TEXT;
+    }
+}
+
+// Decode GIF lalu susun ulang tiap frame utuh (GIF menyimpan frame sebagai potongan + aturan disposal)
+async function loadGif(file) {
+    const { parseGIF, decompressFrames } = await loadGifuct();
+    const parsed = parseGIF(await file.arrayBuffer());
+    const raw = decompressFrames(parsed, true);
+    if (!raw.length) throw new Error("GIF tidak berisi frame");
+
+    const width = parsed.lsd.width;
+    const height = parsed.lsd.height;
+
+    const full = document.createElement("canvas");
+    full.width = width;
+    full.height = height;
+    const fullCtx = full.getContext("2d", { willReadFrequently: true });
+    const patch = document.createElement("canvas");
+    const patchCtx = patch.getContext("2d");
+
+    const frames = [];
+    let t = 0;
+
+    for (const f of raw) {
+        const { left, top, width: pw, height: ph } = f.dims;
+        const delay = f.delay || 100;
+        const previous = f.disposalType === 3 ? fullCtx.getImageData(0, 0, width, height) : null;
+
+        patch.width = pw;
+        patch.height = ph;
+        patchCtx.putImageData(new ImageData(f.patch, pw, ph), 0, 0);
+        fullCtx.drawImage(patch, left, top);
+
+        const snap = document.createElement("canvas");
+        snap.width = width;
+        snap.height = height;
+        snap.getContext("2d").drawImage(full, 0, 0);
+        frames.push({ canvas: snap, start: t, delay });
+        t += delay;
+
+        // 2 = kembalikan ke background, 3 = kembalikan ke frame sebelumnya
+        if (f.disposalType === 2) fullCtx.clearRect(left, top, pw, ph);
+        else if (previous) fullCtx.putImageData(previous, 0, 0);
+    }
+
+    return { width, height, duration: t / 1000, frames };
+}
+
+function setSource(src) {
+    source = src;
+    sourceId++;
+    rgbFrames = [];
+    rgbKey = "";
+
+    $("sourceCard").classList.remove("hidden");
+    $("sourceName").textContent = src.fileName;
+    $("sourceMeta").textContent =
+        `${src.width}×${src.height} · ${src.duration.toFixed(2)} s · ${src.frames.length} frame`;
+
+    sourceCanvas.width = gifCanvas.width = src.width;
+    sourceCanvas.height = gifCanvas.height = src.height;
+
+    const max = src.duration.toFixed(2);
+    startRange.max = endRange.max = max;
+    startRange.value = 0;
+    endRange.value = max;
+    syncRange();
+
+    cropZoom = 1;
+    cropCx = cropCy = 0.5;
+    setSlider("zoom", SLIDERS.zoom.def);
+
+    renderStepper();
+    updateNav();
+}
+
+// ===================== 2. DURASI =====================
+function getRange() {
+    const s = Number(startRange.value);
+    const e = Number(endRange.value);
+    return [s, Math.max(e, s + 0.01)];
+}
+
+const rangeFraction = (t) => (source?.duration ? t / source.duration : 0);
+// Posisi di track mengikuti titik tengah thumb (lebar thumb 26px)
+const trackPos = (p) => `calc(13px + (100% - 26px) * ${p})`;
+
+function syncRange() {
+    const [s, e] = getRange();
+    $("startInput").value = s.toFixed(2);
+    $("endInput").value = e.toFixed(2);
+    $("rangeLabel").textContent = `${s.toFixed(2)} – ${e.toFixed(2)} s (${(e - s).toFixed(2)} s)`;
+
+    $("rangeFill").style.left = trackPos(rangeFraction(s));
+    $("rangeFill").style.right = `calc(13px + (100% - 26px) * ${1 - rangeFraction(e)})`;
+
+    // Thumb mulai dinaikkan kalau mepet ujung kanan, supaya masih bisa digeser
+    startRange.style.zIndex = rangeFraction(s) > 0.9 ? 3 : 1;
+    endRange.style.zIndex = 2;
+
+    updateDurationEstimate();
+}
+
+startRange.addEventListener("input", () => {
+    stopSegment();
+    const e = Number(endRange.value);
+    if (Number(startRange.value) > e - MIN_GAP) startRange.value = Math.max(0, e - MIN_GAP);
+    syncRange();
+    showSourceAt(Number(startRange.value));
+});
+
+endRange.addEventListener("input", () => {
+    stopSegment();
+    const s = Number(startRange.value);
+    if (Number(endRange.value) < s + MIN_GAP) endRange.value = Math.min(source.duration, s + MIN_GAP);
+    syncRange();
+    showSourceAt(Math.max(0, Number(endRange.value) - 0.01));
+});
+
+["startInput", "endInput"].forEach(id => $(id).addEventListener("change", () => {
+    stopSegment();
+    const dur = source.duration;
+    let s = clamp(Number($("startInput").value) || 0, 0, dur);
+    let e = clamp(Number($("endInput").value) || dur, 0, dur);
+    if (e - s < MIN_GAP) {
+        if (id === "startInput") s = Math.max(0, e - MIN_GAP);
+        else e = Math.min(dur, s + MIN_GAP);
+    }
+    startRange.value = s;
+    endRange.value = e;
+    syncRange();
+    showSourceAt(id === "startInput" ? s : Math.max(0, e - 0.01));
+}));
+
+function gifFrameAt(t) {
+    const ms = t * 1000;
+    let found = source.frames[0];
+    for (const f of source.frames) {
+        if (f.start <= ms) found = f;
+        else break;
+    }
+    return found;
+}
+
+function framesInRange() {
+    const [s, e] = getRange();
+    const sMs = s * 1000;
+    const eMs = e * 1000;
+    const list = source.frames.filter(f => f.start + f.delay > sMs && f.start < eMs);
+    return list.length ? list : [gifFrameAt(s)];
+}
+
+function speed() {
+    return Number($("speedInput").value) / 100;
+}
+
+function updateDurationEstimate() {
+    if (!source) return;
+    const list = framesInRange();
+    const ms = list.reduce((sum, f) => sum + f.delay, 0) / speed();
+    $("durationEstimate").textContent = `${list.length} frame · durasi hasil ±${(ms / 1000).toFixed(2)} s`;
+}
+
+function drawGifFrame(f) {
+    gifCtx.clearRect(0, 0, gifCanvas.width, gifCanvas.height);
+    gifCtx.drawImage(f.canvas, 0, 0);
+}
+
+function showSourceAt(t) {
+    $("timeLabel").textContent = t.toFixed(2) + " s";
+    drawGifFrame(gifFrameAt(t));
+}
+
+function enterDuration() {
+    syncRange();
+    showSourceAt(getRange()[0]);
+}
+
+// Putar ulang bagian yang dipilih (loop), mengikuti kecepatan
+let segPlaying = false;
+let segTimer = null;
+
+function setPlayIcon(playing) {
+    $("playBtn").innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
+    $("playBtn").setAttribute("aria-label", playing ? "Jeda" : "Putar");
+}
+
+function updatePlayhead(t) {
+    $("playhead").classList.toggle("hidden", t === null);
+    if (t === null) return;
+    $("playhead").style.left = trackPos(rangeFraction(t));
+    $("timeLabel").textContent = t.toFixed(2) + " s";
+}
+
+function startSegment() {
+    const list = framesInRange();
+    let i = 0;
+    segPlaying = true;
+    setPlayIcon(true);
+
+    const tick = () => {
+        if (!segPlaying) return;
+        const f = list[i];
+        drawGifFrame(f);
+        updatePlayhead(f.start / 1000);
+        i = (i + 1) % list.length;
+        segTimer = setTimeout(tick, f.delay / speed());
+    };
+    tick();
+}
+
+function stopSegment() {
+    if (!segPlaying) return;
+    segPlaying = false;
+    clearTimeout(segTimer);
+    setPlayIcon(false);
+    updatePlayhead(null);
+}
+
+$("playBtn").addEventListener("click", () => (segPlaying ? stopSegment() : startSegment()));
+
+// ===================== 3. ADJUST =====================
+function targetSize() {
+    return SIZES[sizeKey];
+}
+
+// Kotak crop terbesar dengan rasio layar, diperkecil sesuai zoom
+function cropRect() {
+    const W = source.width;
+    const H = source.height;
+    const { w, h } = targetSize();
+    const aspect = w / h;
+
+    let bw = W;
+    let bh = W / aspect;
+    if (bh > H) {
+        bh = H;
+        bw = H * aspect;
+    }
+
+    const sw = bw / cropZoom;
+    const sh = bh / cropZoom;
+    const sx = clamp(cropCx * W - sw / 2, 0, W - sw);
+    const sy = clamp(cropCy * H - sh / 2, 0, H - sh);
+    return { sx, sy, sw, sh };
+}
+
+function sourceRect() {
+    return $("cropInput").checked ? cropRect() : { sx: 0, sy: 0, sw: source.width, sh: source.height };
+}
+
+// Titik tengah ikut dikunci supaya tidak "nyangkut" di luar batas saat digeser balik
+function clampCrop() {
+    const r = cropRect();
+    cropCx = (r.sx + r.sw / 2) / source.width;
+    cropCy = (r.sy + r.sh / 2) / source.height;
+}
+
+function colorSettings() {
+    return {
+        brightness: Number($("brightnessInput").value) / 100,
+        contrast: Number($("contrastInput").value) / 100,
+        saturation: Number($("saturationInput").value) / 100,
+        gamma: Number($("gammaInput").value) / 100
+    };
+}
+
+// Bulatkan ke warna yang bisa ditampilkan layar 16 bit (RGB565)
+const snap5 = (v) => { const q = (v * 31 + 127) / 255 | 0; return (q << 3) | (q >> 2); };
+const snap6 = (v) => { const q = (v * 63 + 127) / 255 | 0; return (q << 2) | (q >> 4); };
+
+// Brightness -> contrast -> saturation -> gamma -> RGB565.
+// Dihitung manual (bukan ctx.filter) supaya sama di semua browser, termasuk Safari iOS lama.
+function adjustPixels(data, { brightness, contrast, saturation, gamma }) {
+    const lut = new Uint8Array(256);
+    for (let v = 0; v < 256; v++) lut[v] = Math.round(255 * Math.pow(v / 255, 1 / gamma));
+
+    for (let i = 0; i < data.length; i += 4) {
+        let r = (data[i] * brightness - 128) * contrast + 128;
+        let g = (data[i + 1] * brightness - 128) * contrast + 128;
+        let b = (data[i + 2] * brightness - 128) * contrast + 128;
+        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+        r = lut[clamp(Math.round(lum + (r - lum) * saturation), 0, 255)];
+        g = lut[clamp(Math.round(lum + (g - lum) * saturation), 0, 255)];
+        b = lut[clamp(Math.round(lum + (b - lum) * saturation), 0, 255)];
+        data[i] = snap5(r);
+        data[i + 1] = snap6(g);
+        data[i + 2] = snap5(b);
+        data[i + 3] = 255;
+    }
+}
+
+// Crop + resize + warna untuk satu frame sumber. Hasil: ImageData ukuran layar.
+function processFrame(src) {
+    const r = sourceRect();
+    const { w, h } = targetSize();
+    if (workCanvas.width !== w || workCanvas.height !== h) {
+        workCanvas.width = w;
+        workCanvas.height = h;
+    }
+    workCtx.fillStyle = "#000";
+    workCtx.fillRect(0, 0, w, h);
+    workCtx.imageSmoothingQuality = "high";
+    workCtx.drawImage(src, r.sx, r.sy, r.sw, r.sh, 0, 0, w, h);
+
+    const img = workCtx.getImageData(0, 0, w, h);
+    adjustPixels(img.data, colorSettings());
+    return img;
+}
+
+function renderAdjustPreview() {
+    if (!source || step !== 3) return;
+
+    const t = Number(posInput.value);
+    $("posValue").textContent = t.toFixed(2) + " s";
+    const frame = gifFrameAt(t).canvas;
+
+    sourceCtx.drawImage(frame, 0, 0);
+    if ($("cropInput").checked) {
+        const W = source.width;
+        const H = source.height;
+        const r = cropRect();
+
+        // Gelapkan area di luar kotak crop
+        sourceCtx.fillStyle = "rgba(0, 0, 0, 0.6)";
+        sourceCtx.fillRect(0, 0, W, r.sy);
+        sourceCtx.fillRect(0, r.sy + r.sh, W, H - r.sy - r.sh);
+        sourceCtx.fillRect(0, r.sy, r.sx, r.sh);
+        sourceCtx.fillRect(r.sx + r.sw, r.sy, W - r.sx - r.sw, r.sh);
+
+        sourceCtx.strokeStyle = "#818cf8";
+        sourceCtx.lineWidth = Math.max(2, W / 150);
+        sourceCtx.strokeRect(r.sx, r.sy, r.sw, r.sh);
+    }
+
+    const img = processFrame(frame);
+    previewCanvas.width = img.width;
+    previewCanvas.height = img.height;
+    previewCtx.putImageData(img, 0, 0);
+    $("adjustSizeLabel").textContent = `${img.width} × ${img.height} px · RGB565`;
+}
+
+function enterAdjust() {
+    const [s, e] = getRange();
+    const max = Math.max(s, e - 0.01);
+    posInput.min = s.toFixed(2);
+    posInput.max = max.toFixed(2);
+    posInput.value = clamp(Number(posInput.value), s, max);
+    onAdjustChange();
+}
+
+function onAdjustChange() {
+    saveSettings();
+    if (!source) return;
+    const crop = $("cropInput").checked;
+    $("cropBox").classList.toggle("hidden", !crop);
+    $("cropSettings").classList.toggle("hidden", !crop);
+    clampCrop();
+    renderAdjustPreview();
+}
+
+posInput.addEventListener("input", renderAdjustPreview);
+
+function updateSliderLabel(key) {
+    $(key + "Value").textContent = SLIDERS[key].format($(key + "Input").value);
+}
+
+function setSlider(key, value) {
+    $(key + "Input").value = value;
+    updateSliderLabel(key);
+}
+
+$("speedInput").addEventListener("input", () => {
+    updateSliderLabel("speed");
+    updateDurationEstimate();
+    saveSettings();
+    if (segPlaying) { stopSegment(); startSegment(); }
+});
+
+$("zoomInput").addEventListener("input", () => {
+    updateSliderLabel("zoom");
+    cropZoom = Number($("zoomInput").value) / 100;
+    onAdjustChange();
+});
+
+COLOR_SLIDERS.forEach(key => {
+    $(key + "Input").addEventListener("input", () => {
+        updateSliderLabel(key);
+        onAdjustChange();
+    });
+});
+
+$("cropInput").addEventListener("change", onAdjustChange);
+
+document.querySelectorAll('input[name="size"]').forEach(radio => {
+    radio.addEventListener("change", () => {
+        sizeKey = radio.value;
+        onAdjustChange();
+    });
+});
+
+$("resetAdjustBtn").addEventListener("click", () => {
+    COLOR_SLIDERS.forEach(key => setSlider(key, SLIDERS[key].def));
+    setSlider("zoom", SLIDERS.zoom.def);
+    cropZoom = 1;
+    cropCx = cropCy = 0.5;
+    onAdjustChange();
+});
+
+// Geser kotak crop
+let drag = null;
+
+function getClientPos(e) {
+    if (e.touches && e.touches.length > 0) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+    return { x: e.clientX, y: e.clientY };
+}
+
+function startDrag(e) {
+    if (!source || step !== 3 || !$("cropInput").checked) return;
+    const pos = getClientPos(e);
+    drag = { x: pos.x, y: pos.y, cx: cropCx, cy: cropCy };
+}
+
+function onDrag(e) {
+    if (!drag) return;
+    e.preventDefault(); // Mencegah scrolling halaman saat digeser di HP
+
+    const pos = getClientPos(e);
+    const rect = sourceCanvas.getBoundingClientRect();
+    cropCx = drag.cx + (pos.x - drag.x) / rect.width;
+    cropCy = drag.cy + (pos.y - drag.y) / rect.height;
+    clampCrop();
+    renderAdjustPreview();
+}
+
+function endDrag() {
+    drag = null;
+}
+
+sourceCanvas.addEventListener("mousedown", startDrag);
+window.addEventListener("mousemove", onDrag);
+window.addEventListener("mouseup", endDrag);
+sourceCanvas.addEventListener("touchstart", startDrag, { passive: false });
+window.addEventListener("touchmove", onDrag, { passive: false });
+window.addEventListener("touchend", endDrag);
+
+// ===================== 4. OPTIMASI =====================
+function adjustKey() {
+    return JSON.stringify([sourceId, getRange(), sizeKey, $("cropInput").checked,
+        cropZoom, cropCx, cropCy, colorSettings()]);
+}
+
+function optimizeSettings() {
+    return {
+        colors: Number($("colorsInput").value),
+        skip: Number($("skipInput").value),
+        dither: $("ditherInput").value,
+        frameOpt: $("frameOptInput").checked,
+        tolerance: Number($("toleranceInput").value),
+        speed: speed()
+    };
+}
+
+function setOptStatus(text) {
+    $("optStatus").textContent = text;
+}
+
+async function enterOptimize() {
+    const key = adjustKey();
+    if (key !== rgbKey || !rgbFrames.length) {
+        const ok = await prepareFrames(key);
+        if (!ok) return;
+    }
+    scheduleEncode(0);
+}
+
+// Jalankan langkah 3 (crop, resize, warna) untuk semua frame dalam rentang
+async function prepareFrames(key) {
+    const token = ++prepareToken;
+    const list = framesInRange();
+    const out = [];
+
+    for (let i = 0; i < list.length; i++) {
+        out.push({ data: processFrame(list[i].canvas).data, delay: list[i].delay });
+        if (i % 5 === 4) {
+            setOptStatus(`Menyiapkan frame ${i + 1}/${list.length}...`);
+            await nextTick();
+            if (token !== prepareToken) return false;
+        }
+    }
+
+    rgbFrames = out;
+    rgbSize = { ...targetSize() };
+    rgbKey = key;
+    return true;
+}
+
+["colorsInput", "skipInput", "ditherInput", "frameOptInput"].forEach(id => {
+    $(id).addEventListener("change", () => {
+        saveSettings();
+        scheduleEncode();
+    });
+});
+
+$("toleranceInput").addEventListener("input", () => {
+    updateSliderLabel("tolerance");
+    saveSettings();
+    scheduleEncode();
+});
+
+$("budgetInput").addEventListener("input", () => {
+    saveSettings();
+    updateSizeInfo();
+});
+
+function scheduleEncode(delay = 350) {
+    clearTimeout(encodeTimer);
+    encodeTimer = setTimeout(runEncode, delay);
+}
+
+async function runEncode() {
+    if (step !== 4 || !rgbFrames.length) return;
+
+    const opts = optimizeSettings();
+    const key = rgbKey + JSON.stringify(opts);
+    if (key === encodeKey && gif) {
+        setOptStatus("");
+        return;
+    }
+
+    const token = ++encodeToken;
+    setOptStatus("Menghitung...");
+    try {
+        const result = await encodeGif(rgbFrames, rgbSize, opts, token);
+        if (!result) return; // dibatalkan pengaturan yang lebih baru
+        showGif(result);
+        encodeKey = key;
+
+        // Pembanding: 256 warna, frame penuh, tanpa dithering. Dihitung sekali per hasil Adjust.
+        const baseKey = rgbKey + opts.speed;
+        if (baselineKey !== baseKey) {
+            const base = await encodeGif(rgbFrames, rgbSize,
+                { colors: 256, skip: 1, dither: "none", frameOpt: false, tolerance: 0, speed: opts.speed }, token);
+            if (!base) return;
+            baselineSize = base.bytes.length;
+            baselineKey = baseKey;
+        }
+        updateSizeInfo();
+        setOptStatus("");
+    } catch (err) {
+        console.error(err);
+        setOptStatus("Gagal: " + (err.message || err));
+    }
+}
+
+function createNearest(palette, skipIndex) {
+    // Cache per warna RGB565 (65.536 kemungkinan) supaya pencarian warna terdekat cepat
+    const cache = new Int16Array(65536).fill(-1);
+    return (r, g, b) => {
+        const key = ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3);
+        let idx = cache[key];
+        if (idx < 0) {
+            const kr = snap5(r);
+            const kg = snap6(g);
+            const kb = snap5(b);
+            let best = Infinity;
+            for (let i = 0; i < palette.length; i++) {
+                if (i === skipIndex) continue;
+                const c = palette[i];
+                // bobot kasar sensitivitas mata: hijau > biru > merah
+                const d = 2 * (c[0] - kr) ** 2 + 4 * (c[1] - kg) ** 2 + 3 * (c[2] - kb) ** 2;
+                if (d < best) {
+                    best = d;
+                    idx = i;
+                }
+            }
+            cache[key] = idx;
+        }
+        return idx;
+    };
+}
+
+// RGBA -> indeks palet, dengan dithering opsional
+function mapFrame(data, w, h, palette, nearest, dither, colorCount) {
+    const out = new Uint8Array(w * h);
+
+    if (dither === "floyd") {
+        const buf = new Float32Array(w * h * 3);
+        for (let i = 0, j = 0; i < data.length; i += 4, j += 3) {
+            buf[j] = data[i];
+            buf[j + 1] = data[i + 1];
+            buf[j + 2] = data[i + 2];
+        }
+        const row = w * 3;
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                const p = y * w + x;
+                const j = p * 3;
+                const r = clamp(buf[j], 0, 255);
+                const g = clamp(buf[j + 1], 0, 255);
+                const b = clamp(buf[j + 2], 0, 255);
+                const idx = nearest(r, g, b);
+                out[p] = idx;
+
+                const c = palette[idx];
+                const err = [r - c[0], g - c[1], b - c[2]];
+                for (let k = 0; k < 3; k++) {
+                    if (x + 1 < w) buf[j + 3 + k] += err[k] * 7 / 16;
+                    if (y + 1 < h) {
+                        if (x > 0) buf[j + row - 3 + k] += err[k] * 3 / 16;
+                        buf[j + row + k] += err[k] * 5 / 16;
+                        if (x + 1 < w) buf[j + row + 3 + k] += err[k] * 1 / 16;
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    // Ordered (Bayer 4x4): pola tetap, jadi tidak "berkedip" antar frame dan lebih mudah dikompres
+    const strength = dither === "ordered" ? 64 * Math.cbrt(16 / colorCount) : 0;
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            const p = y * w + x;
+            const i = p * 4;
+            if (strength) {
+                const t = (BAYER4[(y & 3) * 4 + (x & 3)] / 16 - 0.5) * strength;
+                out[p] = nearest(clamp(data[i] + t, 0, 255), clamp(data[i + 1] + t, 0, 255), clamp(data[i + 2] + t, 0, 255));
+            } else {
+                out[p] = nearest(data[i], data[i + 1], data[i + 2]);
+            }
+        }
+    }
+    return out;
+}
+
+const colorDiff = (a, b) => Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]), Math.abs(a[2] - b[2]));
+
+// Susun GIF sendiri:
+// - satu palet global untuk semua frame (tidak ada palet per frame)
+// - frame yang sama dengan sebelumnya dibuang, durasinya digabung
+// - optimasi frame: hanya kotak area yang berubah, pixel yang tidak berubah dibuat transparan
+async function encodeGif(frames, size, opts, token) {
+    const { quantize, lzwEncode, createStream } = await loadEncoder();
+    const { w, h } = size;
+    const n = w * h;
+    const cancelled = () => token !== encodeToken;
+
+    // 1. Kurangi frame: ambil 1 dari N, durasi frame yang dilewati digabung supaya kecepatan tetap
+    const picked = [];
+    frames.forEach((f, i) => {
+        const delay = f.delay / opts.speed;
+        if (i % opts.skip === 0) picked.push({ data: f.data, delay });
+        else picked[picked.length - 1].delay += delay;
+    });
+
+    // 2. Palet global dari sampel frame (maks ±1 juta pixel). Satu slot disisakan untuk transparan.
+    const reserve = opts.frameOpt ? 1 : 0;
+    const stride = Math.max(1, Math.ceil(picked.length * n / 1e6));
+    const sampleFrames = picked.filter((_, i) => i % stride === 0);
+    const sample = new Uint8Array(sampleFrames.length * n * 4);
+    sampleFrames.forEach((f, i) => sample.set(f.data, i * n * 4));
+
+    const seen = new Set();
+    const palette = [];
+    for (const [r, g, b] of quantize(sample, opts.colors - reserve, { format: "rgb565" })) {
+        const c = [snap5(r), snap6(g), snap5(b)];
+        const k = c.join(",");
+        if (!seen.has(k)) {
+            seen.add(k);
+            palette.push(c);
+        }
+    }
+    const colorCount = palette.length;
+    const transparentIndex = reserve ? palette.length : -1;
+    if (reserve) palette.push([0, 0, 0]);
+
+    await nextTick();
+    if (cancelled()) return null;
+
+    // 3. Tiap frame -> indeks palet
+    const nearest = createNearest(palette, transparentIndex);
+    const indexed = [];
+    for (let i = 0; i < picked.length; i++) {
+        indexed.push(mapFrame(picked[i].data, w, h, palette, nearest, opts.dither, colorCount));
+        if (i % 4 === 3) {
+            await nextTick();
+            if (cancelled()) return null;
+        }
+    }
+
+    // 4. Rencana frame: bandingkan dengan yang sedang tampil di layar
+    const plan = [];
+    let shown = null;
+    for (let i = 0; i < indexed.length; i++) {
+        const cur = indexed[i];
+        const delay = picked[i].delay;
+
+        if (!shown) {
+            plan.push({ x: 0, y: 0, w, h, variants: [cur], delay });
+            shown = cur.slice();
+            continue;
+        }
+
+        const changed = new Uint8Array(n);
+        let minX = w, minY = h, maxX = -1, maxY = -1;
+        for (let p = 0; p < n; p++) {
+            if (cur[p] === shown[p]) continue;
+            if (opts.tolerance && colorDiff(palette[cur[p]], palette[shown[p]]) <= opts.tolerance) continue;
+            changed[p] = 1;
+            const x = p % w;
+            const y = (p / w) | 0;
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+        }
+
+        if (maxX < 0) {
+            plan[plan.length - 1].delay += delay; // frame sama -> durasi digabung
+            continue;
+        }
+
+        if (!opts.frameOpt) {
+            for (let p = 0; p < n; p++) if (changed[p]) shown[p] = cur[p];
+            plan.push({ x: 0, y: 0, w, h, variants: [shown.slice()], delay });
+            continue;
+        }
+
+        // Dua versi kotak perubahan: utuh, atau pixel yang tidak berubah transparan. Dipilih yang lebih kecil.
+        const rw = maxX - minX + 1;
+        const rh = maxY - minY + 1;
+        const opaque = new Uint8Array(rw * rh);
+        const clear = new Uint8Array(rw * rh);
+        for (let yy = 0; yy < rh; yy++) {
+            for (let xx = 0; xx < rw; xx++) {
+                const p = (minY + yy) * w + minX + xx;
+                const q = yy * rw + xx;
+                if (changed[p]) {
+                    opaque[q] = clear[q] = cur[p];
+                    shown[p] = cur[p];
+                } else {
+                    opaque[q] = shown[p];
+                    clear[q] = transparentIndex;
+                }
+            }
+        }
+        plan.push({ x: minX, y: minY, w: rw, h: rh, variants: [opaque, clear], delay });
+
+        if (i % 8 === 7) {
+            await nextTick();
+            if (cancelled()) return null;
+        }
+    }
+
+    // 5. Tulis file GIF
+    const colorBits = Math.max(1, Math.ceil(Math.log2(palette.length)));
+    const out = createStream(Math.max(4096, n));
+    const accum = new Uint8Array(256);
+    const htab = new Int32Array(5003);
+    const codetab = new Int32Array(5003);
+    const u16 = (s, v) => { s.writeByte(v & 0xff); s.writeByte((v >> 8) & 0xff); };
+    const ascii = (s, text) => { for (const ch of text) s.writeByte(ch.charCodeAt(0)); };
+
+    ascii(out, "GIF89a");
+    u16(out, w);
+    u16(out, h);
+    out.writeByte(0x80 | ((colorBits - 1) << 4) | (colorBits - 1)); // pakai palet global
+    out.writeByte(0); // background
+    out.writeByte(0); // aspect ratio
+    for (let i = 0; i < 1 << colorBits; i++) {
+        const c = palette[i] || [0, 0, 0];
+        out.writeByte(c[0]);
+        out.writeByte(c[1]);
+        out.writeByte(c[2]);
+    }
+    // NETSCAPE2.0: ulang selamanya
+    out.writeByte(0x21); out.writeByte(0xff); out.writeByte(11);
+    ascii(out, "NETSCAPE2.0");
+    out.writeByte(3); out.writeByte(1); u16(out, 0); out.writeByte(0);
+
+    let totalMs = 0;
+    for (const f of plan) {
+        let best = null;
+        let bestTransparent = false;
+        f.variants.forEach((pixels, v) => {
+            const tmp = createStream(1024);
+            lzwEncode(f.w, f.h, pixels, Math.max(2, colorBits), tmp, accum, htab, codetab);
+            if (!best || tmp.bytesView().length < best.length) {
+                best = tmp.bytes();
+                bestTransparent = v === 1;
+            }
+        });
+
+        // Graphic Control Extension: disposal 1 (biarkan frame sebelumnya), delay dalam 1/100 detik
+        const cs = Math.max(2, Math.round(f.delay / 10));
+        totalMs += cs * 10;
+        out.writeByte(0x21); out.writeByte(0xf9); out.writeByte(4);
+        out.writeByte((1 << 2) | (bestTransparent ? 1 : 0));
+        u16(out, cs);
+        out.writeByte(bestTransparent ? transparentIndex : 0);
+        out.writeByte(0);
+
+        // Image Descriptor dengan posisi kotak frame
+        out.writeByte(0x2c);
+        u16(out, f.x); u16(out, f.y); u16(out, f.w); u16(out, f.h);
+        out.writeByte(0);
+        out.writeBytes(best);
+    }
+    out.writeByte(0x3b);
+
+    return { bytes: out.bytes(), frameCount: plan.length, colorCount, duration: totalMs / 1000 };
+}
+
+function formatKB(bytes) {
+    return (bytes / 1024).toLocaleString("id-ID", { maximumFractionDigits: 1 }) + " KB";
+}
+
+function showGif(result) {
+    gif = result;
+    if (gifUrl) URL.revokeObjectURL(gifUrl);
+    gifUrl = URL.createObjectURL(new Blob([result.bytes], { type: "image/gif" }));
+    $("resultImg").src = gifUrl;
+    $("resultInfo").textContent =
+        `${result.frameCount} frame · ${result.colorCount} warna · ${rgbSize.w}×${rgbSize.h} · ${result.duration.toFixed(2)} s`;
+}
+
+function updateSizeInfo() {
+    if (!gif) return;
+    const size = gif.bytes.length;
+    $("sizeValue").textContent = formatKB(size);
+
+    if (baselineSize && baselineKey === rgbKey + speed()) {
+        const saved = Math.round((1 - size / baselineSize) * 100);
+        $("baselineInfo").textContent =
+            `Tanpa optimasi (256 warna, frame penuh): ${formatKB(baselineSize)}` + (saved > 0 ? ` · hemat ${saved}%` : "");
+    } else {
+        $("baselineInfo").textContent = "";
+    }
+
+    const budgetKB = Number($("budgetInput").value);
+    $("budgetBox").classList.toggle("hidden", !(budgetKB > 0));
+    if (budgetKB > 0) {
+        const ratio = size / (budgetKB * 1024);
+        const over = ratio > 1;
+        $("budgetBar").style.width = `${Math.min(100, ratio * 100)}%`;
+        $("budgetBar").classList.toggle("bg-emerald-500", !over);
+        $("budgetBar").classList.toggle("bg-red-500", over);
+        $("budgetText").className = `text-xs mt-1 ${over ? "text-red-600" : "text-emerald-700"}`;
+        $("budgetText").textContent = over
+            ? `Melebihi batas ${budgetKB} KB sebanyak ${formatKB(size - budgetKB * 1024)}`
+            : `${Math.round(ratio * 100)}% dari batas ${budgetKB} KB`;
+    }
+}
+
+function download(data, filename, type = "application/octet-stream") {
+    const blob = data instanceof Blob ? data : new Blob([data], { type });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// Isi file GIF sebagai array C, untuk disimpan di flash
+function generateCode() {
+    const name = "anim_" + source.name.replace(/[^a-zA-Z0-9_]/g, "_");
+    const bytes = gif.bytes;
+    const lines = [];
+    for (let i = 0; i < bytes.length; i += 16) {
+        const row = Array.from(bytes.subarray(i, i + 16), b => "0x" + b.toString(16).toUpperCase().padStart(2, "0"));
+        lines.push("    " + row.join(", ") + ",");
+    }
+    return `// ${name}: GIF ${rgbSize.w}x${rgbSize.h}, ${gif.frameCount} frame, ${bytes.length} byte\n` +
+           `// Contoh dengan library AnimatedGIF: gif.open((uint8_t *)${name}, sizeof(${name}), GIFDraw);\n` +
+           `const uint8_t ${name}[] PROGMEM = {\n` +
+           lines.join("\n") + "\n" +
+           `};\n`;
+}
+
+$("downloadGifBtn").addEventListener("click", () => {
+    if (!gif) return;
+    download(gif.bytes, `${source.name}_${sizeKey}.gif`, "image/gif");
+});
+
+$("downloadCodeBtn").addEventListener("click", () => {
+    if (!gif) return;
+    download(generateCode(), `${source.name}_${sizeKey}.h`, "text/plain");
+});
+
+$("copyCodeBtn").addEventListener("click", async (e) => {
+    if (!gif) return;
+    const btn = e.currentTarget;
+    await navigator.clipboard.writeText(generateCode()).catch(() => {});
+    btn.textContent = "Copied!";
+    setTimeout(() => { btn.textContent = "Copy kode"; }, 1500);
+});
+
+// ===================== PENGATURAN TERSIMPAN =====================
+function saveSettings() {
+    try {
+        const data = { size: sizeKey };
+        for (const id of SAVED_INPUTS) {
+            const el = $(id);
+            data[id] = el.type === "checkbox" ? el.checked : el.value;
+        }
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(data));
+    } catch {}
+}
+
+function loadSettings() {
+    try {
+        const data = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+        if (!data) return;
+        for (const id of SAVED_INPUTS) {
+            if (!(id in data)) continue;
+            const el = $(id);
+            if (el.type === "checkbox") el.checked = !!data[id];
+            else el.value = data[id];
+        }
+        if (SIZES[data.size]) sizeKey = data.size;
+    } catch {}
+}
+
+loadSettings();
+document.querySelector(`input[name="size"][value="${sizeKey}"]`).checked = true;
+Object.keys(SLIDERS).forEach(updateSliderLabel);
+setPlayIcon(false);
+renderStepper();
+updateNav();
+</script>
+
+</body>
+</html>

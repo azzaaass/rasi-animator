@@ -1,9 +1,13 @@
 // auth-guard.js
 // Shared PIN validation + route protection logic.
-// Digunakan oleh index.html, convert_frames.html, dan convert_images_rgb.html
+// Digunakan oleh index.html dan semua halaman di pages/ kecuali view_pin.html (PIN pelanggan)
 // supaya logikanya tidak duplikat di setiap file.
+// Password admin untuk pages/view_pin.html ada terpisah di admin-guard.js.
 
 import { PIN_LIST } from "./pin-data.js";
+
+// Dihitung relatif terhadap file ini (js/), jadi tetap benar dari index.html maupun pages/*.html
+const LOGIN_PAGE = new URL("../index.html", import.meta.url).href;
 
 /**
  * Cek apakah sebuah PIN valid & masih dalam rentang aktif.
@@ -27,7 +31,7 @@ export function validatePin(pin) {
 }
 
 /**
- * Panggil di setiap halaman terproteksi (convert_frames.html, convert_images_rgb.html).
+ * Panggil di setiap halaman terproteksi (pages/*.html kecuali view_pin.html).
  * Body halaman diberi class Tailwind "invisible" secara default di HTML.
  * Jika PIN valid -> class "invisible" dilepas sehingga halaman tampil.
  * Jika tidak valid -> hapus cache & redirect ke index.html (halaman tetap invisible).
@@ -55,7 +59,7 @@ export function requireAuth() {
 function kickOut() {
   localStorage.removeItem("rasi_pin");
   localStorage.removeItem("rasi_access");
-  window.location.replace("index.html");
+  window.location.replace(LOGIN_PAGE);
 }
 
 /**
@@ -64,5 +68,5 @@ function kickOut() {
 export function logout() {
   localStorage.removeItem("rasi_pin");
   localStorage.removeItem("rasi_access");
-  window.location.replace("index.html");
+  window.location.replace(LOGIN_PAGE);
 }
