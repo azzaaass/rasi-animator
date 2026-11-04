@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Ilmi Project Animator - Uploader</title>
+    <link rel="icon" type="image/svg+xml" href="../images/logo.svg" />
+
+    <link rel="stylesheet" href="../css/style.css" />
+    <script type="module">
+      import { requireAuth, logout } from "../js/auth-guard.js";
+      requireAuth();
+      window.__raLogout = logout;
+    </script>
+</head>
+
+<!-- class "invisible" dilepas oleh auth-guard.js setelah PIN terverifikasi,
+     supaya tidak ada flash konten sebelum redirect -->
+<body class="invisible min-h-screen p-4 sm:p-6 font-sans text-slate-700 bg-gradient-to-br from-slate-50 via-white to-indigo-50">
+
+<div class="max-w-7xl mx-auto">
+
+    <!-- ROUTE NAVBAR -->
+    <header class="bg-white/85 backdrop-blur-sm border border-slate-200/80 rounded-2xl shadow-md shadow-indigo-100/40 px-3 py-2.5 sm:px-4 sm:py-3 mb-4 sm:mb-6">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <div class="flex items-center gap-2 min-w-0">
+          <img src="../images/logo.svg" alt="logo" class="w-6 h-6 shrink-0" />
+          <span class="text-sm font-semibold text-slate-700 truncate">Ilmi Project Animator</span>
+        </div>
+        <button id="logoutBtn" class="shrink-0 text-xs sm:text-sm text-slate-500 hover:text-red-500 transition-colors">
+          Keluar
+        </button>
+      </div>
+
+      <!-- Tambahkan <a class="..."> baru di sini kalau modul bertambah.
+           flex-wrap otomatis menyusun tombol turun baris, tanpa perlu ubah apa pun lagi. -->
+      <nav class="flex flex-wrap gap-1.5">
+        <a href="convert_gif.html"
+           class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
+          Animasi Rasi
+        </a>
+        <a href="convert_images_rgb.html"
+           class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
+          Background Rasi RGB
+        </a>
+        <a href="animasi_rgb.html"
+           class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
+          Animasi Rasi RGB
+        </a>
+        <a href="uploader.html"
+           class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-indigo-600 text-white shadow-sm shadow-indigo-300/50">
+          Uploader
+        </a>
+      </nav>
+    </header>
+
+    <h1 class="text-xl sm:text-2xl font-semibold text-slate-800 mb-4 sm:mb-6">
+        Uploader
+    </h1>
+
+    <!-- Web Serial hanya ada di browser tertentu dan hanya lewat HTTPS -->
+    <p id="unsupportedNotice" class="hidden text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-xl p-3 mb-4 sm:mb-6">
+        Browser ini belum bisa mengakses port USB. Buka halaman ini dengan Chrome atau Edge di komputer.
+    </p>
+
+    <div class="grid lg:grid-cols-2 gap-4 sm:gap-6 items-start">
+        <div class="space-y-4 sm:space-y-6">
+            <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4 sm:p-6">
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="boardSelect" class="font-medium text-sm text-slate-700 block mb-2">Board</label>
+                        <select id="boardSelect"
+                                class="w-full border border-slate-300 rounded-lg p-2 text-base sm:text-sm disabled:opacity-40
+                                       focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                            <option value="esp32" selected>ESP32</option>
+                            <option value="uno">Arduino UNO R3</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="codeSelect" class="font-medium text-sm text-slate-700 block mb-2">Code</label>
+                        <select id="codeSelect"
+                                class="w-full border border-slate-300 rounded-lg p-2 text-base sm:text-sm disabled:opacity-40
+                                       focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition"></select>
+                    </div>
+                </div>
+
+                <p id="codeInfo" class="text-xs text-slate-500 mt-3 min-h-[1rem]"></p>
+
+                <button id="uploadBtn" disabled
+                        class="w-full mt-4 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors disabled:opacity-40 disabled:pointer-events-none">
+                    Pilih Port &amp; Upload
+                </button>
+
+                <div class="mt-4">
+                    <div class="flex justify-between gap-3 text-sm mb-2">
+                        <span id="statusText" class="text-slate-500" role="status">Pilih board dan code.</span>
+                        <span id="progressValue" class="text-slate-500 font-mono text-xs">0%</span>
+                    </div>
+                    <div class="h-2 rounded-full bg-slate-200 overflow-hidden">
+                        <div id="progressBar" class="h-full w-0 rounded-full bg-indigo-600 transition-all"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4 sm:p-6">
+                <h2 class="font-semibold text-slate-700 mb-3 text-sm">Sebelum upload</h2>
+                <ul class="list-disc pl-4 space-y-1.5 text-sm text-slate-600">
+                    <li>Program yang ada di board akan tertimpa.</li>
+                    <li>Tutup Serial Monitor dan aplikasi lain yang memakai port board.</li>
+                    <li>Jangan cabut USB atau menutup halaman ini selama upload berjalan.</li>
+                    <li>Kalau port tidak muncul, install driver USB board (CH340 atau CP210x).</li>
+                    <li>Kalau ESP32 gagal terhubung, tahan tombol BOOT saat upload dimulai.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4 sm:p-6">
+            <h2 class="font-semibold text-slate-700 mb-3 text-sm">Log</h2>
+            <pre id="logOutput" class="h-64 lg:h-96 overflow-auto border border-slate-200 rounded-lg p-3 font-mono text-xs text-slate-700 bg-slate-50 whitespace-pre-wrap break-words"></pre>
+        </div>
+    </div>
+
+    <p class="mt-4 text-center text-slate-400 italic text-xs">
+      develop by ilmi project
+    </p>
+</div>
+
+<script type="module">
+import { FIRMWARE_LIST } from "../js/firmware-list.js";
+import * as esp32 from "../js/flash-esp32.js";
+import * as uno from "../js/flash-uno.js";
+
+// Setiap flasher punya validate(data, fw) dan flash(port, data, fw, { onLog, onProgress }).
+// Tambahkan entri baru di sini (plus <option> di boardSelect) kalau board bertambah.
+const FLASHERS = { esp32, uno };
+
+const CODE_DIR = "../assets/code/";
+
+const boardSelect = document.getElementById("boardSelect");
+const codeSelect = document.getElementById("codeSelect");
+const codeInfo = document.getElementById("codeInfo");
+const uploadBtn = document.getElementById("uploadBtn");
+const statusText = document.getElementById("statusText");
+const progressValue = document.getElementById("progressValue");
+const progressBar = document.getElementById("progressBar");
+const logOutput = document.getElementById("logOutput");
+
+const serialSupported = "serial" in navigator;
+
+let selected = null; // { fw, data } yang siap di-upload
+let loadToken = 0;   // Mencegah hasil fetch lama menimpa pilihan terbaru
+let uploading = false;
+
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  if (window.__raLogout) window.__raLogout();
+});
+
+const STATUS_COLORS = {
+  info: "text-slate-500",
+  success: "text-emerald-600",
+  error: "text-red-500",
+};
+
+function setStatus(text, kind = "info") {
+  statusText.textContent = text;
+  statusText.className = STATUS_COLORS[kind];
+}
+
+function setProgress(fraction) {
+  const percent = Math.round(fraction * 100);
+  progressBar.style.width = percent + "%";
+  progressValue.textContent = percent + "%";
+}
+
+function appendLog(text) {
+  logOutput.textContent += text;
+  logOutput.scrollTop = logOutput.scrollHeight;
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + " byte";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+}
+
+function refreshControls() {
+  boardSelect.disabled = uploading;
+  codeSelect.disabled = uploading || !codeSelect.value;
+  uploadBtn.disabled = uploading || !selected || !serialSupported;
+}
+
+function renderCodeOptions() {
+  const board = boardSelect.value;
+  codeSelect.innerHTML = "";
+
+  FIRMWARE_LIST.forEach((fw, index) => {
+    if (fw.board !== board) return;
+    codeSelect.add(new Option(fw.name, index));
+  });
+
+  if (codeSelect.options.length === 0) {
+    codeSelect.add(new Option("Belum ada code", ""));
+  }
+}
+
+async function loadSelectedCode() {
+  const token = ++loadToken;
+  const fw = FIRMWARE_LIST[codeSelect.value];
+
+  selected = null;
+  codeInfo.textContent = "";
+  setProgress(0);
+  refreshControls();
+
+  if (!fw) {
+    setStatus("Belum ada code untuk board ini.");
+    return;
+  }
+
+  setStatus("Memuat code...");
+
+  let data;
+  try {
+    const res = await fetch(CODE_DIR + encodeURIComponent(fw.file));
+    if (!res.ok) throw new Error(res.status);
+    data = new Uint8Array(await res.arrayBuffer());
+  } catch {
+    if (token === loadToken) setStatus(`Gagal memuat file ${fw.file}.`, "error");
+    return;
+  }
+
+  // Pilihan sudah berganti selama file diunduh
+  if (token !== loadToken) return;
+
+  const problem = data.length === 0 ? "File kosong." : FLASHERS[fw.board].validate(data, fw);
+  if (problem) {
+    setStatus(problem, "error");
+    return;
+  }
+
+  selected = { fw, data };
+  codeInfo.textContent = "Ukuran: " + formatSize(data.length);
+  setStatus("Siap di-upload.");
+  refreshControls();
+}
+
+function describeError(err) {
+  if (err.name === "NetworkError") {
+    return /open/i.test(err.message)
+      ? "Port sedang dipakai aplikasi lain. Tutup Serial Monitor lalu coba lagi."
+      : "Koneksi ke board terputus.";
+  }
+  if (/dynamically imported module/i.test(err.message)) {
+    return "Gagal memuat library upload. Cek koneksi internet.";
+  }
+  return err.message;
+}
+
+async function upload() {
+  const { fw, data } = selected;
+
+  // requestPort harus dipanggil langsung dari klik user
+  let port;
+  try {
+    port = await navigator.serial.requestPort();
+  } catch (err) {
+    // NotFoundError = dialog port ditutup tanpa memilih
+    if (err.name !== "NotFoundError") setStatus(describeError(err), "error");
+    return;
+  }
+
+  uploading = true;
+  refreshControls();
+  logOutput.textContent = "";
+  setProgress(0);
+  setStatus("Mengupload...");
+
+  try {
+    await FLASHERS[fw.board].flash(port, data, fw, { onLog: appendLog, onProgress: setProgress });
+    setProgress(1);
+    setStatus("Upload berhasil.", "success");
+    appendLog(`\nUpload ${fw.file} berhasil.\n`);
+  } catch (err) {
+    const message = describeError(err);
+    setStatus(message, "error");
+    appendLog(`\nUpload gagal: ${message}\n`);
+    console.error(err);
+  } finally {
+    uploading = false;
+    refreshControls();
+  }
+}
+
+// Cegah tab tertutup tidak sengaja saat flash sedang ditulis
+window.addEventListener("beforeunload", (e) => {
+  if (uploading) e.preventDefault();
+});
+
+boardSelect.addEventListener("change", () => {
+  renderCodeOptions();
+  loadSelectedCode();
+});
+codeSelect.addEventListener("change", loadSelectedCode);
+uploadBtn.addEventListener("click", upload);
+
+if (!serialSupported) document.getElementById("unsupportedNotice").classList.remove("hidden");
+
+renderCodeOptions();
+loadSelectedCode();
+</script>
+
+</body>
+</html>
