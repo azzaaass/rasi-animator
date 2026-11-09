@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow" />
-    <title>Ilmi Project Animator - Animasi Rasi RGB</title>
+    <title>Ilmi Project Animator - Animasi RGB</title>
     <link rel="icon" type="image/svg+xml" href="../images/logo.svg" />
 
     <link rel="stylesheet" href="../css/style.css" />
@@ -38,15 +38,15 @@
       <nav class="flex flex-wrap gap-1.5">
         <a href="convert_gif.html"
            class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
-          Animasi Rasi
+          Animasi Monokrom
         </a>
         <a href="convert_images_rgb.html"
            class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
-          Background Rasi RGB
+          Background RGB
         </a>
         <a href="animasi_rgb.html"
            class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-indigo-600 text-white shadow-sm shadow-indigo-300/50">
-          Animasi Rasi RGB
+          Animasi RGB
         </a>
         <a href="uploader.html"
            class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
@@ -63,21 +63,21 @@
         <!-- ================= 1. INPUT ================= -->
         <section data-step="1">
             <h2 class="font-semibold text-slate-800">1. Input</h2>
-            <p class="text-sm text-slate-500 mb-5">Pilih file GIF yang akan dijadikan animasi layar RGB</p>
+            <p class="text-sm text-slate-500 mb-5">Pilih file MP4 atau GIF yang akan dijadikan animasi layar RGB</p>
 
             <div class="max-w-xl space-y-4">
                 <div id="dropZone"
                      class="border-2 border-dashed border-indigo-300 rounded-2xl p-6 sm:p-8 text-center cursor-pointer transition-colors hover:bg-indigo-50/60">
                     <p id="dropText" class="text-slate-600">
-                        <span class="font-semibold text-indigo-600">Pilih file GIF</span> atau tarik ke sini
+                        <span class="font-semibold text-indigo-600">Pilih file</span> atau tarik ke sini
                     </p>
-                    <p class="text-xs text-slate-400 mt-1">Hasil akhir juga berupa GIF</p>
-                    <input type="file" id="fileInput" accept="image/gif,.gif" class="hidden" />
+                    <p class="text-xs text-slate-400 mt-1">MP4 atau GIF. Hasil akhir berupa GIF.</p>
+                    <input type="file" id="fileInput" accept="video/mp4,video/*,image/gif,.gif" class="hidden" />
                 </div>
 
                 <div id="sourceCard" class="hidden">
                     <div class="flex items-center gap-3 p-4 rounded-2xl bg-indigo-50 border border-indigo-100">
-                        <span class="shrink-0 px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-xs font-semibold tracking-wide">GIF</span>
+                        <span id="sourceBadge" class="shrink-0 px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-xs font-semibold tracking-wide"></span>
                         <div class="min-w-0">
                             <div id="sourceName" class="font-medium text-slate-800 truncate"></div>
                             <div id="sourceMeta" class="text-xs text-slate-500"></div>
@@ -91,10 +91,11 @@
         <!-- ================= 2. DURASI ================= -->
         <section data-step="2" class="hidden">
             <h2 class="font-semibold text-slate-800">2. Durasi</h2>
-            <p class="text-sm text-slate-500 mb-5">Pilih bagian GIF yang dipakai dan kecepatannya</p>
+            <p class="text-sm text-slate-500 mb-5">Pilih bagian video / GIF yang dipakai dan kecepatannya</p>
 
             <div class="grid lg:grid-cols-2 gap-5 lg:gap-6 items-start">
                 <div class="relative rounded-2xl bg-black overflow-hidden">
+                    <video id="video" class="hidden align-top w-full max-h-64 sm:max-h-80 object-contain" muted playsinline preload="auto"></video>
                     <canvas id="gifCanvas" class="align-top w-full max-h-64 sm:max-h-80 object-contain"></canvas>
                     <button id="playBtn" type="button" aria-label="Putar"
                             class="absolute bottom-3 left-3 w-11 h-11 rounded-full bg-white/90 hover:bg-white text-indigo-600 shadow flex items-center justify-center transition-colors"></button>
@@ -137,6 +138,16 @@
                         <input type="range" id="speedInput" min="25" max="300" step="5" value="100" class="w-full accent-indigo-600">
                     </div>
 
+                    <div id="fpsRow" class="hidden flex items-center justify-between gap-3">
+                        <label for="fpsInput" class="text-sm font-medium text-slate-700">
+                            FPS
+                            <span class="block text-xs font-normal text-slate-500">Jumlah frame per detik yang diambil dari video</span>
+                        </label>
+                        <input type="number" id="fpsInput" min="1" max="50" step="1" value="10" inputmode="numeric"
+                               class="w-24 border border-slate-300 bg-white rounded-lg px-3 py-2 text-base sm:text-sm
+                                      focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                    </div>
+
                     <p id="durationEstimate" class="text-sm text-slate-500"></p>
                 </div>
             </div>
@@ -154,8 +165,9 @@
                         <span class="text-sm font-medium text-slate-700">Pratinjau</span>
                         <span id="adjustSizeLabel" class="text-xs text-slate-500"></span>
                     </div>
-                    <div class="rounded-xl bg-slate-950 p-2 sm:p-3 shadow-lg ring-1 ring-slate-800">
-                        <canvas id="previewCanvas" class="pixelated block w-full max-h-48 sm:max-h-72 object-contain rounded-sm bg-black"></canvas>
+                    <!-- Lebar kanvas mengikuti rasio layar (tanpa tepi hitam), supaya batas video yang gelap tetap terlihat -->
+                    <div class="flex justify-center rounded-xl bg-slate-100 p-2 sm:p-3">
+                        <canvas id="previewCanvas" class="pixelated block h-48 sm:h-72 w-auto max-w-full object-contain rounded-sm ring-1 ring-slate-300"></canvas>
                     </div>
                     <div class="flex items-center gap-3 mt-2">
                         <input type="range" id="posInput" min="0" max="1" step="0.01" value="0" aria-label="Posisi pratinjau"
@@ -268,8 +280,8 @@
                 </div>
 
                 <div class="lg:col-start-1 lg:row-start-2">
-                    <div class="rounded-xl bg-slate-950 p-2 sm:p-3 shadow-lg ring-1 ring-slate-800">
-                        <img id="resultImg" alt="Hasil GIF" class="pixelated block w-full max-h-72 object-contain rounded-sm bg-black">
+                    <div class="flex justify-center rounded-xl bg-slate-100 p-2 sm:p-3">
+                        <img id="resultImg" alt="Hasil GIF" class="pixelated block h-48 sm:h-72 w-auto max-w-full object-contain rounded-sm ring-1 ring-slate-300">
                     </div>
                     <p id="resultInfo" class="text-sm text-slate-600 mt-2"></p>
                 </div>
@@ -426,7 +438,7 @@ const COLOR_SLIDERS = ["brightness", "contrast", "saturation", "gamma"];
 
 // Pengaturan yang diingat per browser
 const SETTINGS_KEY = "rasi_anim_settings";
-const SAVED_INPUTS = ["speedInput", "cropInput", "brightnessInput", "contrastInput", "saturationInput", "gammaInput",
+const SAVED_INPUTS = ["speedInput", "fpsInput", "cropInput", "brightnessInput", "contrastInput", "saturationInput", "gammaInput",
     "colorsInput", "skipInput", "ditherInput", "frameOptInput", "toleranceInput", "budgetInput"];
 
 const MIN_GAP = 0.05; // jarak minimum mulai-selesai (detik)
@@ -439,6 +451,7 @@ const PAUSE_ICON = `<svg viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"
 // ===================== ELEMEN & STATE =====================
 const gifCanvas = $("gifCanvas");
 const gifCtx = gifCanvas.getContext("2d");
+let video = $("video");   // diganti elemen baru setiap video baru berhasil dimuat
 const sourceCanvas = $("sourceCanvas");
 const sourceCtx = sourceCanvas.getContext("2d");
 const previewCanvas = $("previewCanvas");
@@ -452,7 +465,7 @@ const workCanvas = document.createElement("canvas");
 const workCtx = workCanvas.getContext("2d", { willReadFrequently: true });
 
 let step = 1;
-let source = null;        // { name, fileName, width, height, duration, frames: [{ canvas, start, delay }] }
+let source = null;        // { type: "video"|"gif", name, fileName, width, height, duration, frames?: [{ canvas, start, delay }] }
 let sourceId = 0;         // naik setiap ganti sumber
 let sizeKey = "160x128";
 
@@ -562,6 +575,9 @@ fileInput.addEventListener("change", () => {
     fileInput.value = ""; // supaya file yang sama bisa dipilih lagi
 });
 
+const isGifFile = (f) => f.type === "image/gif" || /\.gif$/i.test(f.name);
+const isVideoFile = (f) => f.type.startsWith("video/") || /\.(mp4|m4v|mov|webm)$/i.test(f.name);
+
 function showInputError(msg) {
     $("inputError").textContent = msg;
     $("inputError").classList.toggle("hidden", !msg);
@@ -571,14 +587,14 @@ async function handleFile(file) {
     if (!file) return;
     showInputError("");
 
-    if (file.type !== "image/gif" && !/\.gif$/i.test(file.name)) {
-        showInputError("Format tidak didukung. Gunakan file GIF.");
+    if (!isGifFile(file) && !isVideoFile(file)) {
+        showInputError("Format tidak didukung. Gunakan file MP4 atau GIF.");
         return;
     }
 
     $("dropText").textContent = `Memuat ${file.name}...`;
     try {
-        const src = await loadGif(file);
+        const src = isGifFile(file) ? await loadGif(file) : await loadVideo(file);
         src.name = baseName(file.name);
         src.fileName = file.name;
         setSource(src);
@@ -632,7 +648,38 @@ async function loadGif(file) {
         else if (previous) fullCtx.putImageData(previous, 0, 0);
     }
 
-    return { width, height, duration: t / 1000, frames };
+    return { type: "gif", width, height, duration: t / 1000, frames };
+}
+
+// Video dimuat di elemen baru, supaya video sebelumnya tetap utuh kalau file baru gagal dibaca
+function loadVideo(file) {
+    return new Promise((resolve, reject) => {
+        const el = video.cloneNode(false);
+        const url = URL.createObjectURL(file);
+        const fail = (msg) => {
+            el.onloadedmetadata = el.onerror = null;
+            URL.revokeObjectURL(url);
+            reject(new Error(msg));
+        };
+
+        el.onloadedmetadata = async () => {
+            if (!el.videoWidth || !Number.isFinite(el.duration)) {
+                fail("video tidak bisa dibaca");
+                return;
+            }
+            el.onloadedmetadata = el.onerror = null;
+            // iOS baru men-decode frame setelah video pernah diputar; video muted boleh diputar tanpa interaksi
+            try {
+                await el.play();
+                el.pause();
+            } catch {}
+            resolve({ type: "video", element: el, width: el.videoWidth, height: el.videoHeight, duration: el.duration });
+        };
+        el.onerror = () => fail("format video tidak didukung browser");
+        el.muted = true;
+        el.src = url;
+        el.load();
+    });
 }
 
 function setSource(src) {
@@ -640,11 +687,23 @@ function setSource(src) {
     sourceId++;
     rgbFrames = [];
     rgbKey = "";
+    previewFrame = null;
+
+    if (src.type === "video" && src.element !== video) {
+        video.replaceWith(src.element);
+        if (video.src) URL.revokeObjectURL(video.src);
+        video = src.element;
+    }
 
     $("sourceCard").classList.remove("hidden");
+    $("sourceBadge").textContent = src.type === "video" ? "VIDEO" : "GIF";
     $("sourceName").textContent = src.fileName;
-    $("sourceMeta").textContent =
-        `${src.width}×${src.height} · ${src.duration.toFixed(2)} s · ${src.frames.length} frame`;
+    $("sourceMeta").textContent = `${src.width}×${src.height} · ${src.duration.toFixed(2)} s` +
+        (src.type === "gif" ? ` · ${src.frames.length} frame` : "");
+
+    video.classList.toggle("hidden", src.type !== "video");
+    gifCanvas.classList.toggle("hidden", src.type !== "gif");
+    $("fpsRow").classList.toggle("hidden", src.type !== "video");
 
     sourceCanvas.width = gifCanvas.width = src.width;
     sourceCanvas.height = gifCanvas.height = src.height;
@@ -731,8 +790,19 @@ function gifFrameAt(t) {
     return found;
 }
 
+function fps() {
+    return clamp(Math.round(Number($("fpsInput").value)) || 10, 1, 50);
+}
+
+// GIF: frame asli dalam rentang. Video: satu frame tiap 1/FPS detik, gambarnya diambil (seek) saat dipakai.
 function framesInRange() {
     const [s, e] = getRange();
+    if (source.type === "video") {
+        const rate = fps();
+        const n = Math.max(1, Math.ceil((e - s) * rate - 1e-6));
+        return Array.from({ length: n }, (_, i) => ({ start: (s + i / rate) * 1000, delay: 1000 / rate }));
+    }
+
     const sMs = s * 1000;
     const eMs = e * 1000;
     const list = source.frames.filter(f => f.start + f.delay > sMs && f.start < eMs);
@@ -757,8 +827,27 @@ function drawGifFrame(f) {
 
 function showSourceAt(t) {
     $("timeLabel").textContent = t.toFixed(2) + " s";
-    drawGifFrame(gifFrameAt(t));
+    if (source.type === "video") video.currentTime = t;
+    else drawGifFrame(gifFrameAt(t));
 }
+
+function seekVideo(t) {
+    return new Promise((resolve) => {
+        const timer = setTimeout(done, 5000); // jaga-jaga kalau event "seeked" tidak datang
+        function done() {
+            clearTimeout(timer);
+            video.removeEventListener("seeked", done);
+            resolve();
+        }
+        video.addEventListener("seeked", done);
+        video.currentTime = t;
+    });
+}
+
+$("fpsInput").addEventListener("input", () => {
+    updateDurationEstimate();
+    saveSettings();
+});
 
 function enterDuration() {
     syncRange();
@@ -768,6 +857,7 @@ function enterDuration() {
 // Putar ulang bagian yang dipilih (loop), mengikuti kecepatan
 let segPlaying = false;
 let segTimer = null;
+let segRaf = null;
 
 function setPlayIcon(playing) {
     $("playBtn").innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
@@ -782,11 +872,29 @@ function updatePlayhead(t) {
 }
 
 function startSegment() {
-    const list = framesInRange();
-    let i = 0;
     segPlaying = true;
     setPlayIcon(true);
 
+    if (source.type === "video") {
+        const [s, e] = getRange();
+        video.playbackRate = speed();
+        video.currentTime = s;
+        video.play().catch(() => {});
+        const loop = () => {
+            if (!segPlaying) return;
+            if (video.currentTime >= e || video.ended) {
+                video.currentTime = s;
+                if (video.paused) video.play().catch(() => {});
+            }
+            updatePlayhead(video.currentTime);
+            segRaf = requestAnimationFrame(loop);
+        };
+        loop();
+        return;
+    }
+
+    const list = framesInRange();
+    let i = 0;
     const tick = () => {
         if (!segPlaying) return;
         const f = list[i];
@@ -802,6 +910,8 @@ function stopSegment() {
     if (!segPlaying) return;
     segPlaying = false;
     clearTimeout(segTimer);
+    cancelAnimationFrame(segRaf);
+    video.pause();
     setPlayIcon(false);
     updatePlayhead(null);
 }
@@ -897,13 +1007,34 @@ function processFrame(src) {
     return img;
 }
 
-function renderAdjustPreview() {
-    if (!source || step !== 3) return;
+// Frame sumber di posisi pratinjau. Video di-seek sekali per posisi lalu disalin ke kanvas,
+// supaya geser crop & slider warna tidak perlu seek ulang.
+const videoFrameCanvas = document.createElement("canvas");
+let previewFrame = null;
+let previewSeq = 0;
 
+async function loadPreviewFrame() {
+    const seq = ++previewSeq;
     const t = Number(posInput.value);
     $("posValue").textContent = t.toFixed(2) + " s";
-    const frame = gifFrameAt(t).canvas;
 
+    if (source.type === "video") {
+        await seekVideo(t);
+        if (seq !== previewSeq) return; // sudah ada posisi yang lebih baru
+        videoFrameCanvas.width = source.width;
+        videoFrameCanvas.height = source.height;
+        videoFrameCanvas.getContext("2d").drawImage(video, 0, 0);
+        previewFrame = videoFrameCanvas;
+    } else {
+        previewFrame = gifFrameAt(t).canvas;
+    }
+    renderAdjustPreview();
+}
+
+function renderAdjustPreview() {
+    if (!source || step !== 3 || !previewFrame) return;
+
+    const frame = previewFrame;
     sourceCtx.drawImage(frame, 0, 0);
     if ($("cropInput").checked) {
         const W = source.width;
@@ -936,6 +1067,7 @@ function enterAdjust() {
     posInput.max = max.toFixed(2);
     posInput.value = clamp(Number(posInput.value), s, max);
     onAdjustChange();
+    loadPreviewFrame();
 }
 
 function onAdjustChange() {
@@ -948,7 +1080,7 @@ function onAdjustChange() {
     renderAdjustPreview();
 }
 
-posInput.addEventListener("input", renderAdjustPreview);
+posInput.addEventListener("input", loadPreviewFrame);
 
 function updateSliderLabel(key) {
     $(key + "Value").textContent = SLIDERS[key].format($(key + "Input").value);
@@ -1037,7 +1169,7 @@ window.addEventListener("touchend", endDrag);
 
 // ===================== 4. OPTIMASI =====================
 function adjustKey() {
-    return JSON.stringify([sourceId, getRange(), sizeKey, $("cropInput").checked,
+    return JSON.stringify([sourceId, getRange(), fps(), sizeKey, $("cropInput").checked,
         cropZoom, cropCx, cropCy, colorSettings()]);
 }
 
@@ -1069,15 +1201,17 @@ async function enterOptimize() {
 async function prepareFrames(key) {
     const token = ++prepareToken;
     const list = framesInRange();
+    const isVideo = source.type === "video";
     const out = [];
 
     for (let i = 0; i < list.length; i++) {
-        out.push({ data: processFrame(list[i].canvas).data, delay: list[i].delay });
-        if (i % 5 === 4) {
-            setOptStatus(`Menyiapkan frame ${i + 1}/${list.length}...`);
-            await nextTick();
-            if (token !== prepareToken) return false;
-        }
+        const f = list[i];
+        if (isVideo) await seekVideo(f.start / 1000);
+        else if (i % 5 === 4) await nextTick(); // beri kesempatan UI update
+        if (token !== prepareToken) return false;
+
+        out.push({ data: processFrame(isVideo ? video : f.canvas).data, delay: f.delay });
+        setOptStatus(`Menyiapkan frame ${i + 1}/${list.length}...`);
     }
 
     rgbFrames = out;

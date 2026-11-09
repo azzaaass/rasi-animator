@@ -2,9 +2,9 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow" />
-    <title>Ilmi Project Animator - Background Rasi RGB</title>
+    <title>Ilmi Project Animator - Background RGB</title>
     <link rel="icon" type="image/svg+xml" href="../images/logo.svg" />
 
     <link rel="stylesheet" href="../css/style.css" />
@@ -17,9 +17,9 @@
 
 <!-- class "invisible" dilepas oleh auth-guard.js setelah PIN terverifikasi,
      supaya tidak ada flash konten sebelum redirect -->
-<body class="invisible min-h-screen p-4 sm:p-6 font-sans text-slate-700 bg-gradient-to-br from-slate-50 via-white to-indigo-50">
+<body class="invisible min-h-screen p-4 sm:p-6 pb-28 lg:pb-6 font-sans text-slate-700 bg-gradient-to-br from-slate-50 via-white to-indigo-50">
 
-<div class="max-w-7xl mx-auto">
+<div class="max-w-5xl mx-auto">
 
     <!-- ROUTE NAVBAR -->
     <header class="bg-white/85 backdrop-blur-sm border border-slate-200/80 rounded-2xl shadow-md shadow-indigo-100/40 px-3 py-2.5 sm:px-4 sm:py-3 mb-4 sm:mb-6">
@@ -38,15 +38,15 @@
       <nav class="flex flex-wrap gap-1.5">
         <a href="convert_gif.html"
            class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
-          Animasi Rasi
+          Animasi Monokrom
         </a>
         <a href="convert_images_rgb.html"
            class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-indigo-600 text-white shadow-sm shadow-indigo-300/50">
-          Background Rasi RGB
+          Background RGB
         </a>
         <a href="animasi_rgb.html"
            class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
-          Animasi Rasi RGB
+          Animasi RGB
         </a>
         <a href="uploader.html"
            class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
@@ -55,175 +55,282 @@
       </nav>
     </header>
 
-    <h1 class="text-xl sm:text-2xl font-semibold text-slate-800 mb-4 sm:mb-6">
-        Background Rasi RGB
-    </h1>
+    <!-- STEPPER (diisi JS) -->
+    <ol id="stepper" class="flex items-start mb-4 sm:mb-6" aria-label="Langkah"></ol>
 
-    <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4 sm:p-6 mb-6">
-        <div class="grid sm:grid-cols-3 gap-4">
-            <div>
-                <label class="font-medium text-sm text-slate-700 block mb-2">Upload Image</label>
-                <input type="file" id="imageInput" accept="image/*"
-                       class="w-full border border-slate-300 rounded-lg p-2 text-sm
-                              focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+    <main class="bg-white/95 border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4 sm:p-6">
+
+        <!-- ================= 1. INPUT ================= -->
+        <section data-step="1">
+            <h2 class="font-semibold text-slate-800">1. Input</h2>
+            <p class="text-sm text-slate-500 mb-5">Pilih gambar yang akan dijadikan background layar RGB</p>
+
+            <div class="max-w-xl space-y-4">
+                <div id="dropZone"
+                     class="border-2 border-dashed border-indigo-300 rounded-2xl p-6 sm:p-8 text-center cursor-pointer transition-colors hover:bg-indigo-50/60">
+                    <p id="dropText" class="text-slate-600">
+                        <span class="font-semibold text-indigo-600">Pilih gambar</span> atau tarik ke sini
+                    </p>
+                    <p class="text-xs text-slate-400 mt-1">PNG, JPG, WEBP, dan format gambar lain</p>
+                    <input type="file" id="fileInput" accept="image/*" class="hidden" />
+                </div>
+
+                <div id="sourceCard" class="hidden">
+                    <div class="flex items-center gap-3 p-4 rounded-2xl bg-indigo-50 border border-indigo-100">
+                        <span class="shrink-0 px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-xs font-semibold tracking-wide">GAMBAR</span>
+                        <div class="min-w-0">
+                            <div id="sourceName" class="font-medium text-slate-800 truncate"></div>
+                            <div id="sourceMeta" class="text-xs text-slate-500"></div>
+                        </div>
+                    </div>
+                </div>
+                <p id="inputError" class="hidden text-sm text-red-500"></p>
+            </div>
+        </section>
+
+        <!-- ================= 2. ADJUST ================= -->
+        <section data-step="2" class="hidden">
+            <h2 class="font-semibold text-slate-800">2. Adjust</h2>
+            <p class="text-sm text-slate-500 mb-5">Atur ukuran, posisi, dan warna. Pratinjau sudah memakai warna sesuai format layar.</p>
+
+            <!-- Di HP pratinjau menempel di atas saat slider digeser; di desktop jadi 2 kolom -->
+            <div class="grid lg:grid-cols-2 lg:grid-rows-[auto_1fr] gap-x-6 gap-y-5">
+                <div class="sticky top-0 z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 pt-2 pb-3 bg-white/95 backdrop-blur border-b border-slate-200
+                            lg:static lg:mx-0 lg:px-0 lg:pt-0 lg:pb-0 lg:bg-transparent lg:backdrop-blur-none lg:border-0 lg:col-start-1 lg:row-start-1">
+                    <div class="flex justify-between items-baseline mb-2">
+                        <span class="text-sm font-medium text-slate-700">Pratinjau</span>
+                        <span id="adjustSizeLabel" class="text-xs text-slate-500"></span>
+                    </div>
+                    <!-- Lebar kanvas mengikuti rasio layar (tanpa tepi hitam), supaya batas gambar yang gelap tetap terlihat -->
+                    <div class="flex justify-center rounded-xl bg-slate-100 p-2 sm:p-3">
+                        <canvas id="previewCanvas" class="pixelated block h-48 sm:h-72 w-auto max-w-full object-contain rounded-sm ring-1 ring-slate-300"></canvas>
+                    </div>
+                </div>
+
+                <div id="cropBox" class="lg:col-start-1 lg:row-start-2">
+                    <p class="text-xs text-slate-400 mb-2">Geser kotak untuk memilih area crop, atau klik lalu pakai tombol panah</p>
+                    <canvas id="cropCanvas" tabindex="0" aria-label="Area crop"
+                            class="block max-w-full max-h-64 mx-auto rounded-lg border border-slate-200 bg-black touch-none cursor-move
+                                   focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"></canvas>
+                </div>
+
+                <div class="space-y-5 lg:col-start-2 lg:row-start-1 lg:row-span-2">
+                    <div>
+                        <div class="text-sm font-medium text-slate-700 mb-2">Ukuran layar</div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="size" value="160x128" class="peer sr-only" checked>
+                                <div class="h-full flex items-center gap-3 rounded-2xl border-2 border-slate-200 p-3 transition-colors peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-400">
+                                    <span class="shrink-0 w-10 h-8 rounded bg-slate-800"></span>
+                                    <span>
+                                        <span class="block text-sm font-medium text-slate-800">160 × 128</span>
+                                        <span class="block text-xs text-slate-500">16 bit · RGB565</span>
+                                    </span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="size" value="240x240" class="peer sr-only">
+                                <div class="h-full flex items-center gap-3 rounded-2xl border-2 border-slate-200 p-3 transition-colors peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-400">
+                                    <span class="shrink-0 w-8 h-8 rounded bg-slate-800"></span>
+                                    <span>
+                                        <span class="block text-sm font-medium text-slate-800">240 × 240</span>
+                                        <span class="block text-xs text-slate-500">8 bit · RGB332</span>
+                                    </span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-sm font-medium text-slate-700 mb-2">Mode ukuran</div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="resizeMode" value="cover" class="peer sr-only" checked>
+                                <div class="h-full rounded-xl border-2 border-slate-200 px-2 py-2 text-center transition-colors peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-400">
+                                    <span class="block text-sm font-medium text-slate-800">Cover</span>
+                                    <span class="block text-[11px] text-slate-500">Penuh, bisa digeser</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="resizeMode" value="contain" class="peer sr-only">
+                                <div class="h-full rounded-xl border-2 border-slate-200 px-2 py-2 text-center transition-colors peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-400">
+                                    <span class="block text-sm font-medium text-slate-800">Contain</span>
+                                    <span class="block text-[11px] text-slate-500">Utuh, ada tepi hitam</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="resizeMode" value="stretch" class="peer sr-only">
+                                <div class="h-full rounded-xl border-2 border-slate-200 px-2 py-2 text-center transition-colors peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-400">
+                                    <span class="block text-sm font-medium text-slate-800">Stretch</span>
+                                    <span class="block text-[11px] text-slate-500">Ditarik penuh</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="zoomRow">
+                        <label for="zoomInput" class="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                            Zoom <span id="zoomValue" class="font-normal text-slate-500">100%</span>
+                        </label>
+                        <input type="range" id="zoomInput" min="100" max="400" step="5" value="100" class="w-full accent-indigo-600">
+                    </div>
+
+                    <div>
+                        <div class="flex items-baseline justify-between gap-3 mb-2">
+                            <span class="text-sm font-medium text-slate-700">Orientasi</span>
+                            <span class="text-xs text-slate-500">Rotasi <span id="rotationValue">0°</span></span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-2">
+                            <button type="button" id="rotateLeftBtn" aria-label="Putar kiri 90°"
+                                    class="py-2 rounded-xl text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">⟲ 90°</button>
+                            <button type="button" id="rotateRightBtn" aria-label="Putar kanan 90°"
+                                    class="py-2 rounded-xl text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">⟳ 90°</button>
+                            <button type="button" id="flipHBtn" aria-pressed="false"
+                                    class="py-2 rounded-xl text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">Flip H</button>
+                            <button type="button" id="flipVBtn" aria-pressed="false"
+                                    class="py-2 rounded-xl text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">Flip V</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="brightnessInput" class="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                            Brightness <span id="brightnessValue" class="font-normal text-slate-500">100%</span>
+                        </label>
+                        <input type="range" id="brightnessInput" min="0" max="200" step="1" value="100" class="w-full accent-indigo-600">
+                    </div>
+
+                    <div>
+                        <label for="contrastInput" class="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                            Contrast <span id="contrastValue" class="font-normal text-slate-500">100%</span>
+                        </label>
+                        <input type="range" id="contrastInput" min="0" max="200" step="1" value="100" class="w-full accent-indigo-600">
+                    </div>
+
+                    <div>
+                        <label for="saturationInput" class="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                            Saturation <span id="saturationValue" class="font-normal text-slate-500">100%</span>
+                        </label>
+                        <input type="range" id="saturationInput" min="0" max="200" step="1" value="100" class="w-full accent-indigo-600">
+                    </div>
+
+                    <div>
+                        <label for="blurInput" class="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                            Blur <span id="blurValue" class="font-normal text-slate-500">0 px</span>
+                        </label>
+                        <input type="range" id="blurInput" min="0" max="10" step="0.5" value="0" class="w-full accent-indigo-600">
+                    </div>
+
+                    <div>
+                        <label for="sharpenInput" class="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                            Sharpen <span id="sharpenValue" class="font-normal text-slate-500">0%</span>
+                        </label>
+                        <input type="range" id="sharpenInput" min="0" max="100" step="1" value="0" class="w-full accent-indigo-600">
+                    </div>
+
+                    <label class="flex items-center justify-between gap-3 cursor-pointer">
+                        <span>
+                            <span class="block text-sm font-medium text-slate-700">Dithering</span>
+                            <span class="block text-xs text-slate-500">Menyamarkan gradasi yang belang karena jumlah warna layar terbatas</span>
+                        </span>
+                        <input type="checkbox" id="ditherInput" class="peer sr-only">
+                        <span class="switch"></span>
+                    </label>
+
+                    <button type="button" id="resetAdjustBtn"
+                            class="w-full sm:w-auto px-4 py-2 rounded-xl text-sm font-medium bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-500 transition-colors">
+                        Reset pengaturan
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 3. HASIL ================= -->
+        <section data-step="3" class="hidden">
+            <h2 class="font-semibold text-slate-800">3. Hasil</h2>
+            <p class="text-sm text-slate-500 mb-5">Download file BIN untuk disimpan ke perangkat</p>
+
+            <div class="grid lg:grid-cols-2 gap-x-6 gap-y-5 items-start">
+                <div>
+                    <div class="flex justify-center rounded-xl bg-slate-100 p-2 sm:p-3">
+                        <canvas id="resultCanvas" class="pixelated block h-48 sm:h-72 w-auto max-w-full object-contain rounded-sm ring-1 ring-slate-300"></canvas>
+                    </div>
+                </div>
+
+                <div class="space-y-5">
+                    <dl class="grid grid-cols-2 gap-3">
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-3">
+                            <dt class="text-xs text-slate-500">Resolusi</dt>
+                            <dd id="resolutionLabel" class="font-semibold text-slate-800"></dd>
+                        </div>
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-3">
+                            <dt class="text-xs text-slate-500">Format</dt>
+                            <dd id="formatLabel" class="font-semibold text-slate-800"></dd>
+                        </div>
+                        <div class="col-span-2 rounded-2xl bg-slate-50 border border-slate-200 p-3">
+                            <dt class="text-xs text-slate-500">Ukuran file</dt>
+                            <dd id="fileSize" class="text-2xl font-semibold text-slate-800"></dd>
+                        </div>
+                    </dl>
+
+                    <button type="button" id="downloadBtn"
+                            class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors">
+                        Download BIN
+                    </button>
+                </div>
             </div>
 
-            <div>
-                <label class="font-medium text-sm text-slate-700 block mb-2">Resize Mode</label>
-                <select id="resizeMode"
-                        class="w-full border border-slate-300 rounded-lg p-2 text-sm
-                               focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
-                    <option value="cover" selected>Cover (Bisa digeser)</option>
-                    <option value="contain">Contain</option>
-                    <option value="stretch">Stretch</option>
-                </select>
+            <!-- Kode C array, hanya untuk format 8 bit (240x240) -->
+            <div id="codePanel" class="hidden mt-6 pt-6 border-t border-slate-200">
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <h3 class="text-sm font-medium text-slate-700">Kode C array</h3>
+                    <button type="button" id="copyCodeBtn"
+                            class="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm font-medium transition-colors">
+                        Copy
+                    </button>
+                </div>
+                <textarea id="codeOutput" readonly spellcheck="false"
+                          class="w-full h-64 border border-slate-300 rounded-lg p-3 font-mono text-xs text-slate-700 bg-slate-50 whitespace-pre
+                                 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition"></textarea>
             </div>
+        </section>
 
-            <div>
-                <label class="font-medium text-sm text-slate-700 block mb-2">Output Size</label>
-                <select id="outputSize"
-                        class="w-full border border-slate-300 rounded-lg p-2 text-sm
-                               focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
-                    <option value="160x128" selected>160 × 128 (16 bit)</option>
-                    <option value="240x240">240 × 240 (8 bit)</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Penyesuaian gambar, berlaku untuk semua format output -->
-        <div class="mt-4 pt-4 border-t border-slate-200">
-            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                    <label class="font-medium text-sm text-slate-700 flex justify-between mb-2">
-                        Brightness <span id="brightnessValue" class="text-slate-500 font-normal">100%</span>
-                    </label>
-                    <input type="range" id="brightnessInput" min="0" max="200" step="1" value="100"
-                           class="w-full accent-indigo-600">
-                </div>
-
-                <div>
-                    <label class="font-medium text-sm text-slate-700 flex justify-between mb-2">
-                        Contrast <span id="contrastValue" class="text-slate-500 font-normal">100%</span>
-                    </label>
-                    <input type="range" id="contrastInput" min="0" max="200" step="1" value="100"
-                           class="w-full accent-indigo-600">
-                </div>
-
-                <div>
-                    <label class="font-medium text-sm text-slate-700 flex justify-between mb-2">
-                        Saturation <span id="saturationValue" class="text-slate-500 font-normal">100%</span>
-                    </label>
-                    <input type="range" id="saturationInput" min="0" max="200" step="1" value="100"
-                           class="w-full accent-indigo-600">
-                </div>
-
-                <div>
-                    <label class="font-medium text-sm text-slate-700 flex justify-between mb-2">
-                        Blur <span id="blurValue" class="text-slate-500 font-normal">0 px</span>
-                    </label>
-                    <input type="range" id="blurInput" min="0" max="10" step="0.5" value="0"
-                           class="w-full accent-indigo-600">
-                </div>
-
-                <div>
-                    <label class="font-medium text-sm text-slate-700 flex justify-between mb-2">
-                        Sharpen <span id="sharpenValue" class="text-slate-500 font-normal">0%</span>
-                    </label>
-                    <input type="range" id="sharpenInput" min="0" max="100" step="1" value="0"
-                           class="w-full accent-indigo-600">
-                </div>
-
-                <div>
-                    <label class="font-medium text-sm text-slate-700 flex justify-between mb-2">
-                        Zoom <span id="zoomValue" class="text-slate-500 font-normal">100%</span>
-                    </label>
-                    <input type="range" id="zoomInput" min="100" max="400" step="5" value="100"
-                           class="w-full accent-indigo-600 disabled:opacity-40">
-                </div>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-2 mt-4">
-                <button id="rotateLeftBtn" class="px-3 py-2 rounded-xl text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
-                    ⟲ 90°
-                </button>
-                <button id="rotateRightBtn" class="px-3 py-2 rounded-xl text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
-                    ⟳ 90°
-                </button>
-                <span class="text-sm text-slate-500 mr-2">Rotasi: <span id="rotationValue">0°</span></span>
-
-                <button id="flipHBtn" class="px-3 py-2 rounded-xl text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
-                    Flip H
-                </button>
-                <button id="flipVBtn" class="px-3 py-2 rounded-xl text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
-                    Flip V
-                </button>
-
-                <label class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 cursor-pointer">
-                    <input type="checkbox" id="ditherInput" class="w-4 h-4 accent-indigo-600">
-                    Dithering
-                </label>
-
-                <button id="resetAdjustBtn" class="ml-auto px-4 py-2 rounded-xl text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-500">
-                    Reset
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4">
-            <h2 class="font-semibold text-slate-700 mb-3 text-sm">Original</h2>
-            <canvas id="originalCanvas" class="border border-slate-200 rounded-lg w-full bg-black"></canvas>
-        </div>
-
-        <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4">
-            <h2 class="font-semibold text-slate-700 mb-1 text-sm">Resized <span id="resizedLabel">160×128</span></h2>
-            <p class="text-xs text-slate-400 mb-2">Geser foto atau klik & gunakan panah keyboard</p>
-            <canvas id="resizedCanvas" 
-                    width="160" height="128" 
-                    class="border border-slate-200 rounded-lg w-full cursor-grab active:cursor-grabbing focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-black" 
-                    tabindex="0"></canvas>
-        </div>
-
-        <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4 sm:col-span-2 lg:col-span-1">
-            <h2 class="font-semibold text-slate-700 mb-1 text-sm">RGB Preview</h2>
-            <p class="text-xs text-slate-400 mb-2">Format: <span id="formatLabel">RGB565 (16 bit)</span></p>
-            <canvas id="rgbCanvas" width="160" height="128" class="border border-slate-200 rounded-lg w-full bg-black"></canvas>
-        </div>
-    </div>
-
-    <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-5 sm:p-6 mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div class="text-sm text-slate-600">
-            <div>Resolution: <span id="resolutionLabel" class="font-semibold text-slate-800">160 × 128 (16 bit)</span></div>
-            <div>File Size: <span id="fileSize" class="font-semibold text-slate-800">0 bytes</span></div>
-        </div>
-        <button id="downloadBtn" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors">
-            Download BIN
-        </button>
-    </div>
-
-    <!-- Kode C array, hanya tampil untuk format 8 bit (240x240) -->
-    <div id="codePanel" class="hidden bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-5 sm:p-6 mt-6">
-        <div class="flex items-center justify-between gap-3 mb-3">
-            <h2 class="font-semibold text-slate-700 text-sm">C Array Code</h2>
-            <button id="copyCodeBtn" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-medium transition-colors">
-                Copy
+        <!-- NAVIGASI: menempel di bawah layar pada HP, biasa di desktop -->
+        <div id="wizardNav"
+             class="fixed inset-x-0 bottom-0 z-20 flex gap-3 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-white/95 backdrop-blur border-t border-slate-200
+                    lg:static lg:z-auto lg:mt-6 lg:px-0 lg:pb-0 lg:pt-6 lg:bg-transparent lg:backdrop-blur-none">
+            <button type="button" id="backBtn"
+                    class="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium transition-colors">
+                Kembali
+            </button>
+            <button type="button" id="nextBtn"
+                    class="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors
+                           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-indigo-600">
+                Lanjut
             </button>
         </div>
-        <textarea id="codeOutput" readonly spellcheck="false"
-                  placeholder="Upload image untuk menghasilkan kode..."
-                  class="w-full h-72 border border-slate-300 rounded-lg p-3 font-mono text-xs text-slate-700 bg-slate-50 whitespace-pre
-                         focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition"></textarea>
-    </div>
+    </main>
 
     <p class="mt-4 text-center text-slate-400 italic text-xs">
       develop by ilmi project
     </p>
 </div>
 
-<script>
+<script type="module">
+const $ = (id) => document.getElementById(id);
+
+$("logoutBtn").addEventListener("click", () => {
+    if (window.__raLogout) window.__raLogout();
+});
+
+// ===================== KONSTANTA =====================
+const STEPS = [
+    { n: 1, label: "Input" },
+    { n: 2, label: "Adjust" },
+    { n: 3, label: "Hasil" }
+];
+
 // Daftar output yang didukung.
-// Tambahkan entri baru di sini kalau ada ukuran/format lain.
+// Tambahkan entri baru di sini (plus radio name="size") kalau ada ukuran/format lain.
 const OUTPUT_FORMATS = {
     "160x128": { w: 160, h: 128, bpp: 16, name: "RGB565", bits: [5, 6, 5] },
     "240x240": { w: 240, h: 240, bpp: 8,  name: "RGB332", bits: [3, 3, 2] }
@@ -240,96 +347,223 @@ const ADJUSTMENTS = {
     zoom:       { def: 100, unit: "%" }
 };
 
-let TARGET_W = 160;
-let TARGET_H = 128;
-let currentFormat = OUTPUT_FORMATS["160x128"];
+const PAN_STEP = 5; // pixel layar per tekan tombol panah
+const CROP_VIEW_MAX = 800; // sisi terpanjang kanvas pemilih crop, supaya foto besar tidak berat digambar ulang
 
-const imageInput = document.getElementById("imageInput");
-const resizeMode = document.getElementById("resizeMode");
-const outputSize = document.getElementById("outputSize");
-const zoomInput = document.getElementById("zoomInput");
-const ditherInput = document.getElementById("ditherInput");
-const logoutBtn = document.getElementById("logoutBtn");
+const CHECK_ICON = `<svg viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5"><path fill-rule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z" clip-rule="evenodd"/></svg>`;
 
-logoutBtn.addEventListener("click", () => {
-  if (window.__raLogout) window.__raLogout();
-});
+// ===================== ELEMEN & STATE =====================
+const previewCanvas = $("previewCanvas");
+const previewCtx = previewCanvas.getContext("2d", { willReadFrequently: true });
+const resultCanvas = $("resultCanvas");
+const resultCtx = resultCanvas.getContext("2d");
+const cropCanvas = $("cropCanvas");
+const cropCtx = cropCanvas.getContext("2d");
 
-const originalCanvas = document.getElementById("originalCanvas");
-const resizedCanvas = document.getElementById("resizedCanvas");
-const rgbCanvas = document.getElementById("rgbCanvas");
-const codePanel = document.getElementById("codePanel");
-const codeOutput = document.getElementById("codeOutput");
-
-const originalCtx = originalCanvas.getContext("2d", { willReadFrequently: true });
+// Kanvas kerja: hasil resize + filter sebelum dikuantisasi ke format layar
+const resizedCanvas = document.createElement("canvas");
 const resizedCtx = resizedCanvas.getContext("2d", { willReadFrequently: true });
-const rgbCtx = rgbCanvas.getContext("2d", { willReadFrequently: true });
-
-let outputBuffer = null;
-let currentImage = null;
 
 // Gambar sumber yang sudah diputar/di-flip, dipakai sebagai input resize
 const sourceCanvas = document.createElement("canvas");
 const sourceCtx = sourceCanvas.getContext("2d");
+
+let step = 1;
+let currentImage = null;
+let imageUrl = null;
+
+let TARGET_W = 160;
+let TARGET_H = 128;
+let currentFormat = OUTPUT_FORMATS["160x128"];
+let outputBuffer = null;
+
 let rotation = 0; // 0, 90, 180, 270
 let flipH = false;
 let flipV = false;
 
-// Variabel untuk Panning/Geser
+// Posisi gambar (geser) di layar target
 let offsetX = 0;
 let offsetY = 0;
 let needsCenter = true;
 let imgDrawW = 0;
 let imgDrawH = 0;
 
-// Variabel state Dragging
-let isDragging = false;
-let startX = 0;
-let startY = 0;
-let initialOffsetX = 0;
-let initialOffsetY = 0;
+// ===================== NAVIGASI LANGKAH =====================
+function renderStepper() {
+    $("stepper").innerHTML = STEPS.map((s, i) => {
+        const done = s.n < step;
+        const current = s.n === step;
 
-// Event Listeners Dasar
-imageInput.addEventListener("change", handleImageUpload);
-resizeMode.addEventListener("change", () => {
-    zoomInput.disabled = resizeMode.value === "stretch"; // Zoom tidak berlaku di mode stretch
-    resetOffset(); // Kembalikan ke tengah saat mode berubah
-    renderImage();
-});
-outputSize.addEventListener("change", () => {
-    applyOutputFormat();
-    resetOffset(); // Ukuran target berubah, mulai lagi dari tengah
-    renderImage();
-});
-ditherInput.addEventListener("change", renderImage);
+        const circle = current ? "bg-indigo-600 text-white ring-4 ring-indigo-100"
+            : done ? "bg-indigo-600 text-white"
+            : "bg-white text-slate-400 border border-slate-300";
+        const label = current ? "text-indigo-700 font-semibold" : done ? "text-slate-600" : "text-slate-400";
+        const line = i === 0 ? "" :
+            `<li aria-hidden="true" class="flex-1 h-0.5 mt-4 rounded-full ${s.n <= step ? "bg-indigo-600" : "bg-slate-200"}"></li>`;
 
-// --- SLIDER PENYESUAIAN ---
+        return line + `
+            <li>
+                <button type="button" data-goto="${s.n}" ${done ? "" : "disabled"} ${current ? 'aria-current="step"' : ""}
+                        class="flex flex-col items-center gap-1 w-14 sm:w-20 disabled:cursor-default">
+                    <span class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition ${circle}">
+                        ${done ? CHECK_ICON : s.n}
+                    </span>
+                    <span class="text-[11px] sm:text-xs ${label}">${s.label}</span>
+                </button>
+            </li>`;
+    }).join("");
+}
+
+$("stepper").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-goto]");
+    if (btn && !btn.disabled) goTo(Number(btn.dataset.goto));
+});
+
+function updateNav() {
+    $("backBtn").classList.toggle("hidden", step === 1);
+    $("nextBtn").textContent = step === STEPS.length ? "Mulai lagi" : "Lanjut";
+    $("nextBtn").disabled = step === 1 && !currentImage;
+}
+
+function goTo(n) {
+    step = n;
+    document.querySelectorAll("section[data-step]").forEach(s => {
+        s.classList.toggle("hidden", Number(s.dataset.step) !== n);
+    });
+    renderStepper();
+    updateNav();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    if (n === 3) enterResult();
+}
+
+$("nextBtn").addEventListener("click", () => {
+    if ($("nextBtn").disabled) return;
+    goTo(step === STEPS.length ? 1 : step + 1);
+});
+
+$("backBtn").addEventListener("click", () => goTo(step - 1));
+
+// ===================== 1. INPUT =====================
+const dropZone = $("dropZone");
+const fileInput = $("fileInput");
+const DROP_TEXT = $("dropText").innerHTML;
+
+dropZone.addEventListener("click", () => fileInput.click());
+dropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropZone.classList.add("bg-indigo-50");
+});
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("bg-indigo-50"));
+dropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropZone.classList.remove("bg-indigo-50");
+    handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener("change", () => {
+    handleFile(fileInput.files[0]);
+    fileInput.value = ""; // supaya file yang sama bisa dipilih lagi
+});
+
+function showInputError(msg) {
+    $("inputError").textContent = msg;
+    $("inputError").classList.toggle("hidden", !msg);
+}
+
+function handleFile(file) {
+    if (!file) return;
+    showInputError("");
+
+    if (!file.type.startsWith("image/")) {
+        showInputError("Format tidak didukung. Gunakan file gambar, misalnya PNG atau JPG.");
+        return;
+    }
+
+    $("dropText").textContent = `Memuat ${file.name}...`;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+
+    img.onload = () => {
+        $("dropText").innerHTML = DROP_TEXT;
+        if (imageUrl) URL.revokeObjectURL(imageUrl);
+        imageUrl = url;
+        currentImage = img;
+
+        $("sourceCard").classList.remove("hidden");
+        $("sourceName").textContent = file.name;
+        $("sourceMeta").textContent = `${img.width}×${img.height} px`;
+
+        buildSource();
+        resetOffset();
+        renderImage();
+        updateNav();
+    };
+    img.onerror = () => {
+        $("dropText").innerHTML = DROP_TEXT;
+        URL.revokeObjectURL(url);
+        showInputError(`Gagal memuat ${file.name}: gambar tidak bisa dibaca browser.`);
+    };
+    img.src = url;
+}
+
+// ===================== 2. ADJUST =====================
 function adj(key) {
-    return Number(document.getElementById(key + "Input").value);
+    return Number($(key + "Input").value);
 }
 
 function updateAdjustLabel(key) {
-    document.getElementById(key + "Value").innerText = adj(key) + ADJUSTMENTS[key].unit;
+    $(key + "Value").textContent = adj(key) + ADJUSTMENTS[key].unit;
+}
+
+function resizeMode() {
+    return document.querySelector('input[name="resizeMode"]:checked').value;
 }
 
 Object.keys(ADJUSTMENTS).forEach(key => {
-    document.getElementById(key + "Input").addEventListener("input", () => {
+    $(key + "Input").addEventListener("input", () => {
         updateAdjustLabel(key);
         renderImage();
     });
 });
 
+document.querySelectorAll('input[name="resizeMode"]').forEach(radio => {
+    radio.addEventListener("change", () => {
+        applyResizeMode();
+        resetOffset(); // Kembalikan ke tengah saat mode berubah
+        renderImage();
+    });
+});
+
+document.querySelectorAll('input[name="size"]').forEach(radio => {
+    radio.addEventListener("change", () => {
+        applyOutputFormat(radio.value);
+        resetOffset(); // Ukuran target berubah, mulai lagi dari tengah
+        renderImage();
+    });
+});
+
+$("ditherInput").addEventListener("change", renderImage);
+
 // Reset hanya slider; rotasi, flip & dithering dibiarkan karena biasanya mengikuti hardware
-document.getElementById("resetAdjustBtn").addEventListener("click", () => {
+$("resetAdjustBtn").addEventListener("click", () => {
     Object.entries(ADJUSTMENTS).forEach(([key, cfg]) => {
-        document.getElementById(key + "Input").value = cfg.def;
+        $(key + "Input").value = cfg.def;
         updateAdjustLabel(key);
     });
+    resetOffset();
     renderImage();
 });
 
+// Zoom & pilih area crop tidak berlaku di mode stretch
+function applyResizeMode() {
+    const stretch = resizeMode() === "stretch";
+    $("zoomRow").classList.toggle("hidden", stretch);
+    $("cropBox").classList.toggle("hidden", stretch);
+}
+
 // --- ROTASI & FLIP ---
 function setToggle(btn, on) {
+    btn.setAttribute("aria-pressed", on);
     btn.classList.toggle("bg-indigo-600", on);
     btn.classList.toggle("text-white", on);
     btn.classList.toggle("hover:bg-indigo-700", on);
@@ -339,26 +573,26 @@ function setToggle(btn, on) {
 }
 
 function changeOrientation() {
-    document.getElementById("rotationValue").innerText = rotation + "°";
+    $("rotationValue").textContent = rotation + "°";
     buildSource();
     resetOffset();
     renderImage();
 }
 
-document.getElementById("rotateLeftBtn").addEventListener("click", () => {
+$("rotateLeftBtn").addEventListener("click", () => {
     rotation = (rotation + 270) % 360;
     changeOrientation();
 });
-document.getElementById("rotateRightBtn").addEventListener("click", () => {
+$("rotateRightBtn").addEventListener("click", () => {
     rotation = (rotation + 90) % 360;
     changeOrientation();
 });
-document.getElementById("flipHBtn").addEventListener("click", (e) => {
+$("flipHBtn").addEventListener("click", (e) => {
     flipH = !flipH;
     setToggle(e.currentTarget, flipH);
     changeOrientation();
 });
-document.getElementById("flipVBtn").addEventListener("click", (e) => {
+$("flipVBtn").addEventListener("click", (e) => {
     flipV = !flipV;
     setToggle(e.currentTarget, flipV);
     changeOrientation();
@@ -381,33 +615,23 @@ function buildSource() {
 }
 
 // Menyesuaikan ukuran canvas + label dengan format yang dipilih
-function applyOutputFormat() {
-    currentFormat = OUTPUT_FORMATS[outputSize.value];
+function applyOutputFormat(key) {
+    currentFormat = OUTPUT_FORMATS[key];
     TARGET_W = currentFormat.w;
     TARGET_H = currentFormat.h;
 
-    resizedCanvas.width = TARGET_W;
-    resizedCanvas.height = TARGET_H;
-    rgbCanvas.width = TARGET_W;
-    rgbCanvas.height = TARGET_H;
+    resizedCanvas.width = previewCanvas.width = resultCanvas.width = TARGET_W;
+    resizedCanvas.height = previewCanvas.height = resultCanvas.height = TARGET_H;
 
-    const label = `${TARGET_W} × ${TARGET_H} (${currentFormat.bpp} bit)`;
-    document.getElementById("resizedLabel").innerText = `${TARGET_W}×${TARGET_H}`;
-    document.getElementById("formatLabel").innerText = `${currentFormat.name} (${currentFormat.bpp} bit)`;
-    document.getElementById("resolutionLabel").innerText = label;
-
-    // Canvas yang di-resize otomatis kosong (hitam) sampai render berikutnya
-    resizedCtx.fillStyle = "black";
-    resizedCtx.fillRect(0, 0, TARGET_W, TARGET_H);
-
+    $("adjustSizeLabel").textContent = `${TARGET_W} × ${TARGET_H} px · ${currentFormat.name}`;
     outputBuffer = null;
-    document.getElementById("fileSize").innerText = "0 bytes";
-
-    codePanel.classList.toggle("hidden", currentFormat.bpp !== 8);
-    codeOutput.value = "";
 }
 
-// --- FUNGSI MENGAMBIL KOORDINAT MOUSE/TOUCH ---
+// --- GESER KOTAK CROP (mouse, sentuh, keyboard) ---
+// Kotak crop adalah bagian gambar yang tampil di layar. Menggeser kotak ke kanan
+// sama dengan menggeser gambar ke kiri di layar, jadi offset berubah berlawanan arah.
+let drag = null;
+
 function getClientPos(e) {
     if (e.touches && e.touches.length > 0) {
         return { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -415,91 +639,53 @@ function getClientPos(e) {
     return { x: e.clientX, y: e.clientY };
 }
 
-// --- EVENT LISTENERS UNTUK DRAG & DROP ---
 function startDrag(e) {
-    if (!currentImage || resizeMode.value === "stretch") return;
-    isDragging = true;
+    if (!currentImage || resizeMode() === "stretch") return;
     const pos = getClientPos(e);
-    startX = pos.x;
-    startY = pos.y;
-    initialOffsetX = offsetX;
-    initialOffsetY = offsetY;
+    drag = { x: pos.x, y: pos.y, offsetX, offsetY };
 }
 
 function onDrag(e) {
-    if (!isDragging) return;
+    if (!drag) return;
     e.preventDefault(); // Mencegah scrolling halaman saat digeser di HP
 
+    // Pergeseran di layar -> pixel gambar sumber -> pixel layar target
     const pos = getClientPos(e);
-    // Menyesuaikan rasio pergeseran mouse dengan ukuran canvas aktual di layar vs resolusi 160x128
-    const rect = resizedCanvas.getBoundingClientRect();
-    const scaleX = resizedCanvas.width / rect.width;
-    const scaleY = resizedCanvas.height / rect.height;
-
-    const dx = (pos.x - startX) * scaleX;
-    const dy = (pos.y - startY) * scaleY;
-
-    offsetX = initialOffsetX + dx;
-    offsetY = initialOffsetY + dy;
-    
+    const rect = cropCanvas.getBoundingClientRect();
+    const toTarget = imgDrawW / rect.width;
+    offsetX = drag.offsetX - (pos.x - drag.x) * toTarget;
+    offsetY = drag.offsetY - (pos.y - drag.y) * toTarget;
     renderImage();
 }
 
 function endDrag() {
-    isDragging = false;
+    drag = null;
 }
 
-// Mouse Events
-resizedCanvas.addEventListener("mousedown", startDrag);
+cropCanvas.addEventListener("mousedown", startDrag);
 window.addEventListener("mousemove", onDrag);
 window.addEventListener("mouseup", endDrag);
-
-// Touch Events (Untuk HP)
-resizedCanvas.addEventListener("touchstart", startDrag, { passive: false });
+cropCanvas.addEventListener("touchstart", startDrag, { passive: false });
 window.addEventListener("touchmove", onDrag, { passive: false });
 window.addEventListener("touchend", endDrag);
 
-// --- EVENT LISTENER UNTUK KEYBOARD (PANAH) ---
-resizedCanvas.addEventListener("keydown", (e) => {
-    if (!currentImage || resizeMode.value === "stretch") return;
+const ARROWS = {
+    ArrowUp: [0, -PAN_STEP],
+    ArrowDown: [0, PAN_STEP],
+    ArrowLeft: [-PAN_STEP, 0],
+    ArrowRight: [PAN_STEP, 0]
+};
 
-    const step = 5; // Kecepatan geser pixel
-    let moved = false;
-
-    if (e.key === "ArrowUp") { offsetY -= step; moved = true; }
-    else if (e.key === "ArrowDown") { offsetY += step; moved = true; }
-    else if (e.key === "ArrowLeft") { offsetX -= step; moved = true; }
-    else if (e.key === "ArrowRight") { offsetX += step; moved = true; }
-
-    if (moved) {
-        e.preventDefault(); // Mencegah scrolling layar
-        renderImage();
-    }
+cropCanvas.addEventListener("keydown", (e) => {
+    const move = ARROWS[e.key];
+    if (!move || !currentImage || resizeMode() === "stretch") return;
+    e.preventDefault(); // Mencegah scrolling layar
+    offsetX -= move[0];
+    offsetY -= move[1];
+    renderImage();
 });
 
-// --- LOGIKA UTAMA ---
-
-function handleImageUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const img = new Image();
-    img.onload = () => {
-        currentImage = img;
-        
-        // Tampilkan gambar original
-        originalCanvas.width = img.width;
-        originalCanvas.height = img.height;
-        originalCtx.clearRect(0, 0, img.width, img.height);
-        originalCtx.drawImage(img, 0, 0);
-
-        buildSource();
-        resetOffset();
-        renderImage();
-    };
-    img.src = URL.createObjectURL(file);
-}
-
+// --- RENDER ---
 function resetOffset() {
     offsetX = 0;
     offsetY = 0;
@@ -514,7 +700,7 @@ function renderImage() {
     resizedCtx.fillStyle = "black";
     resizedCtx.fillRect(0, 0, TARGET_W, TARGET_H);
 
-    const mode = resizeMode.value;
+    const mode = resizeMode();
 
     resizedCtx.filter =
         `brightness(${adj("brightness")}%) contrast(${adj("contrast")}%) ` +
@@ -543,29 +729,51 @@ function renderImage() {
             offsetY = TARGET_H / 2 - (TARGET_H / 2 - offsetY) * imgDrawH / prevDrawH;
         }
 
-        // Validasi dan Batasi (Clamp) Offset agar gambar tidak keluar batas
-        if (imgDrawW > TARGET_W) {
-            // Bisa digeser kiri-kanan
-            offsetX = Math.max(TARGET_W - imgDrawW, Math.min(0, offsetX));
-        } else {
-            // Kunci di tengah
-            offsetX = (TARGET_W - imgDrawW) / 2;
-        }
-
-        if (imgDrawH > TARGET_H) {
-            // Bisa digeser atas-bawah
-            offsetY = Math.max(TARGET_H - imgDrawH, Math.min(0, offsetY));
-        } else {
-            // Kunci di tengah
-            offsetY = (TARGET_H - imgDrawH) / 2;
-        }
+        // Gambar lebih besar dari layar boleh digeser sampai tepinya; kalau lebih kecil dikunci di tengah
+        offsetX = imgDrawW > TARGET_W
+            ? Math.max(TARGET_W - imgDrawW, Math.min(0, offsetX))
+            : (TARGET_W - imgDrawW) / 2;
+        offsetY = imgDrawH > TARGET_H
+            ? Math.max(TARGET_H - imgDrawH, Math.min(0, offsetY))
+            : (TARGET_H - imgDrawH) / 2;
 
         resizedCtx.drawImage(img, offsetX, offsetY, imgDrawW, imgDrawH);
+        drawCropView(scale);
     }
 
     resizedCtx.filter = "none";
     applySharpen(adj("sharpen") / 100);
-    convertImage();
+    convertPixels();
+}
+
+// Gambar sumber utuh + kotak bagian yang tampil di layar, area di luarnya digelapkan
+function drawCropView(scale) {
+    const W = sourceCanvas.width;
+    const H = sourceCanvas.height;
+    const k = Math.min(1, CROP_VIEW_MAX / Math.max(W, H));
+    const cw = Math.round(W * k);
+    const ch = Math.round(H * k);
+    if (cropCanvas.width !== cw || cropCanvas.height !== ch) {
+        cropCanvas.width = cw;
+        cropCanvas.height = ch;
+    }
+    cropCtx.drawImage(sourceCanvas, 0, 0, cw, ch);
+
+    // Mode contain: gambar bisa lebih kecil dari layar, jadi kotak dibatasi tepi gambar
+    const x0 = Math.max(0, -offsetX / scale) * k;
+    const y0 = Math.max(0, -offsetY / scale) * k;
+    const x1 = Math.min(W, (TARGET_W - offsetX) / scale) * k;
+    const y1 = Math.min(H, (TARGET_H - offsetY) / scale) * k;
+
+    cropCtx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    cropCtx.fillRect(0, 0, cw, y0);
+    cropCtx.fillRect(0, y1, cw, ch - y1);
+    cropCtx.fillRect(0, y0, x0, y1 - y0);
+    cropCtx.fillRect(x1, y0, cw - x1, y1 - y0);
+
+    cropCtx.strokeStyle = "#818cf8";
+    cropCtx.lineWidth = Math.max(2, cw / 150);
+    cropCtx.strokeRect(x0, y0, x1 - x0, y1 - y0);
 }
 
 // Sharpen 3x3 (Laplacian) dengan kekuatan 0..1. Pixel di tepi memakai tetangga terdekat.
@@ -602,53 +810,6 @@ function applySharpen(amount) {
     resizedCtx.putImageData(imageData, 0, 0);
 }
 
-function convertImage() {
-    convertPixels();
-    document.getElementById("fileSize").innerText = outputBuffer.length + " bytes";
-
-    if (currentFormat.bpp === 8) scheduleCodeUpdate();
-}
-
-// Generate kode C di-debounce, karena 57.600 byte terlalu berat
-// untuk ditulis ulang di setiap gerakan drag
-let codeTimer = null;
-function scheduleCodeUpdate() {
-    clearTimeout(codeTimer);
-    codeTimer = setTimeout(generateCode, 150);
-}
-
-function generateCode() {
-    if (!outputBuffer || currentFormat.bpp !== 8) return;
-
-    const lines = [];
-    for (let i = 0; i < outputBuffer.length; i += 16) {
-        const row = [];
-        for (let j = i; j < Math.min(i + 16, outputBuffer.length); j++) {
-            row.push("0x" + outputBuffer[j].toString(16).toUpperCase().padStart(2, "0"));
-        }
-        lines.push("    " + row.join(", ") + ",");
-    }
-
-    codeOutput.value =
-        `// Image Size: ${TARGET_W}x${TARGET_H}, Format: 8-bit ${currentFormat.name}\n` +
-        `static const uint8_t PROGMEM bg_8bit_data[] = {\n` +
-        lines.join("\n") + "\n" +
-        `};\n`;
-}
-
-document.getElementById("copyCodeBtn").addEventListener("click", async (e) => {
-    if (!codeOutput.value) return;
-    const btn = e.currentTarget;
-    try {
-        await navigator.clipboard.writeText(codeOutput.value);
-    } catch {
-        codeOutput.select();
-        document.execCommand("copy");
-    }
-    btn.innerText = "Copied!";
-    setTimeout(() => { btn.innerText = "Copy"; }, 1500);
-});
-
 // Kuantisasi tiap channel ke jumlah bit format lalu dikemas big endian:
 //   16 bit RGB565: RRRRRGGG GGGBBBBB (2 byte per pixel)
 //    8 bit RGB332: RRRGGGBB          (1 byte per pixel)
@@ -659,10 +820,10 @@ function convertPixels() {
     const bits = currentFormat.bits;
     const maxLevel = bits.map(b => (1 << b) - 1);
     const bytesPerPixel = currentFormat.bpp / 8;
-    const dither = ditherInput.checked;
+    const dither = $("ditherInput").checked;
 
     outputBuffer = new Uint8Array(TARGET_W * TARGET_H * bytesPerPixel);
-    const preview = rgbCtx.createImageData(TARGET_W, TARGET_H);
+    const preview = previewCtx.createImageData(TARGET_W, TARGET_H);
 
     // Salinan float supaya error dithering bisa diakumulasi tanpa terpotong 0..255
     const work = Float32Array.from(data);
@@ -701,15 +862,52 @@ function convertPixels() {
         }
     }
 
-    rgbCtx.putImageData(preview, 0, 0);
+    previewCtx.putImageData(preview, 0, 0);
 }
 
-document.getElementById("downloadBtn").addEventListener("click", () => {
-    if (!outputBuffer) {
-        alert("Upload image first.");
-        return;
+// ===================== 3. HASIL =====================
+function enterResult() {
+    resultCtx.drawImage(previewCanvas, 0, 0);
+    $("resolutionLabel").textContent = `${TARGET_W} × ${TARGET_H}`;
+    $("formatLabel").textContent = `${currentFormat.name} (${currentFormat.bpp} bit)`;
+    $("fileSize").textContent = outputBuffer.length.toLocaleString("id-ID") + " byte";
+
+    const showCode = currentFormat.bpp === 8;
+    $("codePanel").classList.toggle("hidden", !showCode);
+    $("codeOutput").value = showCode ? generateCode() : "";
+}
+
+function generateCode() {
+    const lines = [];
+    for (let i = 0; i < outputBuffer.length; i += 16) {
+        const row = [];
+        for (let j = i; j < Math.min(i + 16, outputBuffer.length); j++) {
+            row.push("0x" + outputBuffer[j].toString(16).toUpperCase().padStart(2, "0"));
+        }
+        lines.push("    " + row.join(", ") + ",");
     }
 
+    return `// Image Size: ${TARGET_W}x${TARGET_H}, Format: 8-bit ${currentFormat.name}\n` +
+        `static const uint8_t PROGMEM bg_8bit_data[] = {\n` +
+        lines.join("\n") + "\n" +
+        `};\n`;
+}
+
+$("copyCodeBtn").addEventListener("click", async (e) => {
+    const codeOutput = $("codeOutput");
+    if (!codeOutput.value) return;
+    const btn = e.currentTarget;
+    try {
+        await navigator.clipboard.writeText(codeOutput.value);
+    } catch {
+        codeOutput.select();
+        document.execCommand("copy");
+    }
+    btn.textContent = "Copied!";
+    setTimeout(() => { btn.textContent = "Copy"; }, 1500);
+});
+
+$("downloadBtn").addEventListener("click", () => {
     const blob = new Blob([outputBuffer], { type: "application/octet-stream" });
     const a = document.createElement("a");
 
@@ -720,9 +918,11 @@ document.getElementById("downloadBtn").addEventListener("click", () => {
     URL.revokeObjectURL(a.href);
 });
 
-// Sinkronkan canvas & label dengan pilihan awal
-applyOutputFormat();
-
+// ===================== MULAI =====================
+applyOutputFormat(document.querySelector('input[name="size"]:checked').value);
+applyResizeMode();
+renderStepper();
+updateNav();
 </script>
 
 </body>
