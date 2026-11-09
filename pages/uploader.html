@@ -13,6 +13,7 @@
       requireAuth();
       window.__raLogout = logout;
     </script>
+    <script type="module" src="../js/hidden-menu.js"></script>
 </head>
 
 <!-- class "invisible" dilepas oleh auth-guard.js setelah PIN terverifikasi,
@@ -24,7 +25,7 @@
     <!-- ROUTE NAVBAR -->
     <header class="bg-white/85 backdrop-blur-sm border border-slate-200/80 rounded-2xl shadow-md shadow-indigo-100/40 px-3 py-2.5 sm:px-4 sm:py-3 mb-4 sm:mb-6">
       <div class="flex items-center justify-between gap-3 mb-2">
-        <div class="flex items-center gap-2 min-w-0">
+        <div id="brand" class="flex items-center gap-2 min-w-0 select-none">
           <img src="../images/logo.svg" alt="logo" class="w-6 h-6 shrink-0" />
           <span class="text-sm font-semibold text-slate-700 truncate">Ilmi Project Animator</span>
         </div>
@@ -108,7 +109,7 @@
                 <h2 class="font-semibold text-slate-700 mb-3 text-sm">Sebelum upload</h2>
                 <ul class="list-disc pl-4 space-y-1.5 text-sm text-slate-600">
                     <li>Program yang ada di board akan tertimpa.</li>
-                    <li>Tutup Serial Monitor dan aplikasi lain yang memakai port board.</li>
+                    <li>Tutup Serial Monitor di Arduino IDE dan aplikasi lain yang memakai port board. Terminal di halaman ini ditutup otomatis selama upload.</li>
                     <li>Jangan cabut USB atau menutup halaman ini selama upload berjalan.</li>
                     <li>Kalau port tidak muncul, install driver USB board (CH340 atau CP210x).</li>
                     <li>Kalau ESP32 gagal terhubung, tahan tombol BOOT saat upload dimulai.</li>
@@ -116,9 +117,53 @@
             </div>
         </div>
 
+        <!-- Terminal: log upload + Serial Monitor dalam satu tampilan -->
         <div class="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-3xl shadow-xl shadow-indigo-100/50 p-4 sm:p-6">
-            <h2 class="font-semibold text-slate-700 mb-3 text-sm">Log</h2>
-            <pre id="logOutput" class="h-64 lg:h-96 overflow-auto border border-slate-200 rounded-lg p-3 font-mono text-xs text-slate-700 bg-slate-50 whitespace-pre-wrap break-words"></pre>
+            <div class="flex items-center justify-between gap-3 mb-3">
+                <h2 class="font-semibold text-slate-700 text-sm">Terminal</h2>
+                <span id="terminalStatus" class="inline-flex items-center gap-1.5 text-xs text-slate-500">
+                    <span id="terminalDot" class="w-2 h-2 rounded-full bg-slate-300"></span>
+                    <span id="terminalStatusText">Terputus</span>
+                </span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 mb-3">
+                <label for="baudSelect" class="sr-only">Baudrate</label>
+                <select id="baudSelect"
+                        class="border border-slate-300 rounded-lg px-2 py-2 text-base sm:text-sm disabled:opacity-40
+                               focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition"></select>
+                <button id="connectBtn" type="button"
+                        class="px-4 py-2 rounded-xl text-sm font-medium bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition-colors disabled:opacity-40 disabled:pointer-events-none">
+                    Hubungkan
+                </button>
+                <button id="clearBtn" type="button"
+                        class="ml-auto px-4 py-2 rounded-xl text-sm font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
+                    Bersihkan
+                </button>
+            </div>
+
+            <pre id="terminalOutput" role="log" aria-live="polite"
+                 class="h-72 lg:h-[26rem] overflow-auto border border-slate-200 rounded-lg p-3 font-mono text-xs text-slate-700 bg-slate-50 whitespace-pre-wrap break-words"></pre>
+
+            <form id="sendForm" class="flex flex-wrap gap-2 mt-3">
+                <label for="sendInput" class="sr-only">Data yang dikirim</label>
+                <input id="sendInput" type="text" autocomplete="off" spellcheck="false" placeholder="Ketik data untuk dikirim ke board..."
+                       class="flex-1 min-w-0 basis-48 border border-slate-300 rounded-lg px-3 py-2 font-mono text-base sm:text-sm disabled:opacity-40
+                              focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                <label for="lineEndingSelect" class="sr-only">Akhir baris</label>
+                <select id="lineEndingSelect"
+                        class="border border-slate-300 rounded-lg px-2 py-2 text-base sm:text-sm disabled:opacity-40
+                               focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition">
+                    <option value="none">Tanpa akhir baris</option>
+                    <option value="lf" selected>Newline (LF)</option>
+                    <option value="cr">Carriage return (CR)</option>
+                    <option value="crlf">Newline &amp; CR</option>
+                </select>
+                <button id="sendBtn" type="submit"
+                        class="px-5 py-2 rounded-xl text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white transition-colors disabled:opacity-40 disabled:pointer-events-none">
+                    Kirim
+                </button>
+            </form>
         </div>
     </div>
 
@@ -131,12 +176,23 @@
 import { FIRMWARE_LIST } from "../js/firmware-list.js";
 import * as esp32 from "../js/flash-esp32.js";
 import * as uno from "../js/flash-uno.js";
+import { SerialMonitor } from "../js/serial-monitor.js";
 
 // Setiap flasher punya validate(data, fw) dan flash(port, data, fw, { onLog, onProgress }).
 // Tambahkan entri baru di sini (plus <option> di boardSelect) kalau board bertambah.
 const FLASHERS = { esp32, uno };
 
 const CODE_DIR = "../assets/code/";
+
+const BAUD_RATES = [300, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 74880, 115200, 230400, 250000, 460800, 921600];
+const DEFAULT_BAUD = 115200;
+const LINE_ENDINGS = { none: "", lf: "\n", cr: "\r", crlf: "\r\n" };
+
+// Isi terminal lama dibuang kalau melebihi ini, supaya halaman tetap ringan saat board terus mengirim data
+const MAX_TERMINAL_CHARS = 200000;
+
+// Pengaturan terminal yang diingat per browser
+const SETTINGS_KEY = "rasi_uploader_settings";
 
 const boardSelect = document.getElementById("boardSelect");
 const codeSelect = document.getElementById("codeSelect");
@@ -145,13 +201,27 @@ const uploadBtn = document.getElementById("uploadBtn");
 const statusText = document.getElementById("statusText");
 const progressValue = document.getElementById("progressValue");
 const progressBar = document.getElementById("progressBar");
-const logOutput = document.getElementById("logOutput");
+const terminalOutput = document.getElementById("terminalOutput");
+const baudSelect = document.getElementById("baudSelect");
+const connectBtn = document.getElementById("connectBtn");
+const sendInput = document.getElementById("sendInput");
+const lineEndingSelect = document.getElementById("lineEndingSelect");
+const sendBtn = document.getElementById("sendBtn");
 
 const serialSupported = "serial" in navigator;
 
-let selected = null; // { fw, data } yang siap di-upload
-let loadToken = 0;   // Mencegah hasil fetch lama menimpa pilihan terbaru
+let selected = null;      // { fw, data } yang siap di-upload
+let loadToken = 0;        // Mencegah hasil fetch lama menimpa pilihan terbaru
 let uploading = false;
+let terminalBusy = false; // Port terminal sedang dibuka / ditutup
+
+const monitor = new SerialMonitor({
+  onData: (text) => termWrite(text, "data"),
+  onLost: () => {
+    termNotice("Koneksi terminal terputus.", "error");
+    refreshControls();
+  },
+});
 
 document.getElementById("logoutBtn").addEventListener("click", () => {
   if (window.__raLogout) window.__raLogout();
@@ -174,9 +244,146 @@ function setProgress(fraction) {
   progressValue.textContent = percent + "%";
 }
 
-function appendLog(text) {
-  logOutput.textContent += text;
-  logOutput.scrollTop = logOutput.scrollHeight;
+// ===================== TERMINAL =====================
+// data = dari board, log = proses upload, notice/error = pesan halaman, sent = data yang dikirim
+const TERM_COLORS = {
+  data: "text-slate-800",
+  log: "text-slate-500",
+  notice: "text-indigo-600",
+  error: "text-red-500",
+  sent: "text-emerald-600",
+};
+
+let termLength = 0;
+let termLastKind = null;
+let termAtLineStart = true;
+
+function termWrite(text, kind) {
+  if (!text) return;
+  // Hanya ikut menggulung kalau user sedang melihat bagian paling bawah
+  const atBottom = terminalOutput.scrollHeight - terminalOutput.scrollTop - terminalOutput.clientHeight < 24;
+
+  // Teks sejenis yang berurutan digabung ke satu node, supaya data serial tidak membuat ribuan elemen
+  if (kind === termLastKind && terminalOutput.lastChild) {
+    terminalOutput.lastChild.firstChild.appendData(text);
+  } else {
+    const span = document.createElement("span");
+    span.className = TERM_COLORS[kind];
+    span.textContent = text;
+    terminalOutput.appendChild(span);
+    termLastKind = kind;
+  }
+  termLength += text.length;
+  termAtLineStart = text.endsWith("\n");
+
+  // Buang teks paling lama. Node terakhir tidak pernah terhapus utuh karena panjangnya selalu > kelebihan.
+  while (termLength > MAX_TERMINAL_CHARS) {
+    const node = terminalOutput.firstChild.firstChild;
+    const excess = termLength - MAX_TERMINAL_CHARS;
+    if (node.length > excess) {
+      node.deleteData(0, excess);
+      termLength -= excess;
+    } else {
+      termLength -= node.length;
+      terminalOutput.firstChild.remove();
+    }
+  }
+
+  if (atBottom) terminalOutput.scrollTop = terminalOutput.scrollHeight;
+}
+
+// Pesan halaman selalu di baris sendiri
+function termNotice(text, kind = "notice") {
+  termWrite((termAtLineStart ? "" : "\n") + text + "\n", kind);
+}
+
+function clearTerminal() {
+  terminalOutput.textContent = "";
+  termLength = 0;
+  termLastKind = null;
+  termAtLineStart = true;
+}
+
+function baudRate() {
+  return Number(baudSelect.value);
+}
+
+function saveSettings() {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ baud: baudSelect.value, lineEnding: lineEndingSelect.value }));
+  } catch {}
+}
+
+function loadSettings() {
+  try {
+    const data = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+    if (!data) return;
+    if (BAUD_RATES.includes(Number(data.baud))) baudSelect.value = data.baud;
+    if (data.lineEnding in LINE_ENDINGS) lineEndingSelect.value = data.lineEnding;
+  } catch {}
+}
+
+async function openTerminal(port) {
+  terminalBusy = true;
+  refreshControls();
+  try {
+    await monitor.open(port, baudRate());
+    termNotice(`Terminal terhubung (${baudRate()} baud).`);
+  } catch (err) {
+    termNotice(`Terminal gagal dibuka: ${describeError(err)}`, "error");
+  } finally {
+    terminalBusy = false;
+    refreshControls();
+  }
+}
+
+async function closeTerminal(message) {
+  terminalBusy = true;
+  refreshControls();
+  await monitor.close();
+  if (message) termNotice(message);
+  terminalBusy = false;
+  refreshControls();
+}
+
+async function toggleTerminal() {
+  if (monitor.isOpen) {
+    await closeTerminal("Terminal ditutup.");
+    return;
+  }
+
+  // requestPort harus dipanggil langsung dari klik user
+  let port;
+  try {
+    port = await navigator.serial.requestPort();
+  } catch (err) {
+    if (err.name !== "NotFoundError") termNotice(describeError(err), "error");
+    return;
+  }
+  await openTerminal(port);
+}
+
+// Ganti baudrate saat terhubung: buka ulang port yang sama
+async function changeBaud() {
+  saveSettings();
+  if (!monitor.isOpen) return;
+  const port = monitor.port;
+  await closeTerminal();
+  await openTerminal(port);
+}
+
+async function sendData(e) {
+  e.preventDefault();
+  if (!monitor.isOpen) return;
+  const text = sendInput.value;
+  try {
+    await monitor.write(text + LINE_ENDINGS[lineEndingSelect.value]);
+    termNotice("→ " + text, "sent");
+    sendInput.value = "";
+  } catch (err) {
+    termNotice(`Gagal mengirim: ${describeError(err)}`, "error");
+  }
+  sendInput.focus();
 }
 
 function formatSize(bytes) {
@@ -186,9 +393,22 @@ function formatSize(bytes) {
 }
 
 function refreshControls() {
+  const open = monitor.isOpen;
+  const busy = uploading || terminalBusy;
+
   boardSelect.disabled = uploading;
   codeSelect.disabled = uploading || !codeSelect.value;
-  uploadBtn.disabled = uploading || !selected || !serialSupported;
+  uploadBtn.disabled = busy || !selected || !serialSupported;
+  // Kalau terminal terhubung, upload memakai port terminal tanpa memilih port lagi
+  uploadBtn.textContent = open ? "Upload ke Port Terminal" : "Pilih Port & Upload";
+
+  baudSelect.disabled = busy || !serialSupported;
+  connectBtn.disabled = busy || !serialSupported;
+  connectBtn.textContent = open ? "Putuskan" : "Hubungkan";
+  sendInput.disabled = lineEndingSelect.disabled = sendBtn.disabled = busy || !open;
+
+  document.getElementById("terminalDot").className = "w-2 h-2 rounded-full " + (open ? "bg-emerald-500" : "bg-slate-300");
+  document.getElementById("terminalStatusText").textContent = open ? `Terhubung · ${baudRate()} baud` : "Terputus";
 }
 
 function renderCodeOptions() {
@@ -260,37 +480,47 @@ function describeError(err) {
 
 async function upload() {
   const { fw, data } = selected;
+  const reopenTerminal = monitor.isOpen;
 
-  // requestPort harus dipanggil langsung dari klik user
   let port;
-  try {
-    port = await navigator.serial.requestPort();
-  } catch (err) {
-    // NotFoundError = dialog port ditutup tanpa memilih
-    if (err.name !== "NotFoundError") setStatus(describeError(err), "error");
-    return;
+  if (reopenTerminal) {
+    // Port dipakai bergantian: terminal ditutup selama upload, lalu dibuka lagi
+    port = monitor.port;
+    await closeTerminal("Terminal ditutup sementara untuk upload.");
+  } else {
+    // requestPort harus dipanggil langsung dari klik user
+    try {
+      port = await navigator.serial.requestPort();
+    } catch (err) {
+      // NotFoundError = dialog port ditutup tanpa memilih
+      if (err.name !== "NotFoundError") setStatus(describeError(err), "error");
+      return;
+    }
   }
 
   uploading = true;
   refreshControls();
-  logOutput.textContent = "";
   setProgress(0);
   setStatus("Mengupload...");
+  termNotice(`── Upload ${fw.file} ──`);
 
   try {
-    await FLASHERS[fw.board].flash(port, data, fw, { onLog: appendLog, onProgress: setProgress });
+    await FLASHERS[fw.board].flash(port, data, fw, { onLog: (text) => termWrite(text, "log"), onProgress: setProgress });
     setProgress(1);
     setStatus("Upload berhasil.", "success");
-    appendLog(`\nUpload ${fw.file} berhasil.\n`);
+    termNotice(`Upload ${fw.file} berhasil.`);
   } catch (err) {
     const message = describeError(err);
     setStatus(message, "error");
-    appendLog(`\nUpload gagal: ${message}\n`);
+    termNotice(`Upload gagal: ${message}`, "error");
     console.error(err);
   } finally {
     uploading = false;
     refreshControls();
   }
+
+  // Dibuka lagi supaya output awal board setelah reset langsung terlihat
+  if (reopenTerminal) await openTerminal(port);
 }
 
 // Cegah tab tertutup tidak sengaja saat flash sedang ditulis
@@ -304,11 +534,19 @@ boardSelect.addEventListener("change", () => {
 });
 codeSelect.addEventListener("change", loadSelectedCode);
 uploadBtn.addEventListener("click", upload);
+connectBtn.addEventListener("click", toggleTerminal);
+baudSelect.addEventListener("change", changeBaud);
+lineEndingSelect.addEventListener("change", saveSettings);
+document.getElementById("sendForm").addEventListener("submit", sendData);
+document.getElementById("clearBtn").addEventListener("click", clearTerminal);
 
 if (!serialSupported) document.getElementById("unsupportedNotice").classList.remove("hidden");
 
+for (const baud of BAUD_RATES) baudSelect.add(new Option(`${baud} baud`, baud, false, baud === DEFAULT_BAUD));
+loadSettings();
 renderCodeOptions();
 loadSelectedCode();
+refreshControls();
 </script>
 
 </body>

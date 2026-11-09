@@ -23,5 +23,12 @@ export const FIRMWARE_LIST = [
         name: "RelayFy", 
         board: "uno", 
         file: "relayfy_arduino.ino.with_bootloader.bin"
+    },
+    {
+        name: "Rasi RGB V1.7 1.3 Inch",
+        board: "esp32", 
+        chip: "ESP32-C3",
+        file: "rasi_v1.7_rgb_1.3.ino.merged.bin",
+        address: 0x0
     }
 ];

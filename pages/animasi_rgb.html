@@ -13,6 +13,7 @@
       requireAuth();
       window.__raLogout = logout;
     </script>
+    <script type="module" src="../js/hidden-menu.js"></script>
 </head>
 
 <!-- class "invisible" dilepas oleh auth-guard.js setelah PIN terverifikasi,
@@ -24,7 +25,7 @@
     <!-- ROUTE NAVBAR -->
     <header class="bg-white/85 backdrop-blur-sm border border-slate-200/80 rounded-2xl shadow-md shadow-indigo-100/40 px-3 py-2.5 sm:px-4 sm:py-3 mb-4 sm:mb-6">
       <div class="flex items-center justify-between gap-3 mb-2">
-        <div class="flex items-center gap-2 min-w-0">
+        <div id="brand" class="flex items-center gap-2 min-w-0 select-none">
           <img src="../images/logo.svg" alt="logo" class="w-6 h-6 shrink-0" />
           <span class="text-sm font-semibold text-slate-700 truncate">Ilmi Project Animator</span>
         </div>
@@ -48,8 +49,8 @@
            class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-indigo-600 text-white shadow-sm shadow-indigo-300/50">
           Animasi RGB
         </a>
-        <a href="uploader.html"
-           class="inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
+        <a href="uploader.html" data-hidden-menu
+           class="hidden inline-flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">
           Uploader
         </a>
       </nav>
